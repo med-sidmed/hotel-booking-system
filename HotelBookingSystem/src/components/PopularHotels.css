@@ -1,0 +1,141 @@
+.popular-hotels {
+  width: 100%;
+  background: #f5f1e8;
+  padding: 4rem 0;
+}
+
+.popular-hotels-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 5%;
+}
+
+.section-title {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #3d2817;
+  text-align: center;
+  margin-bottom: 3rem;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+.hotels-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 2rem;
+}
+
+.hotel-card {
+  background: white;
+  border-radius: 15px;
+  overflow: hidden;
+  box-shadow: 0 5px 20px rgba(61, 40, 23, 0.1);
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+}
+
+.hotel-card:hover {
+  transform: translateY(-10px);
+  box-shadow: 0 10px 30px rgba(61, 40, 23, 0.2);
+}
+
+.hotel-image {
+  width: 100%;
+  height: 220px;
+  overflow: hidden;
+  background: linear-gradient(135deg, #8b6f47 0%, #6b5438 100%);
+  position: relative;
+}
+
+.hotel-image-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 4rem;
+  background: linear-gradient(135deg, rgba(212, 165, 116, 0.3) 0%, rgba(139, 111, 71, 0.3) 100%);
+}
+
+.hotel-info {
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  flex-grow: 1;
+}
+
+.hotel-name {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #3d2817;
+  margin: 0;
+}
+
+.hotel-location {
+  font-size: 0.95rem;
+  color: #8b6f47;
+  font-weight: 600;
+  margin: 0;
+}
+
+.hotel-description {
+  font-size: 0.95rem;
+  color: #5a4a3a;
+  line-height: 1.6;
+  margin: 0;
+  flex-grow: 1;
+}
+
+.hotel-book-btn {
+  align-self: flex-start;
+  background: linear-gradient(135deg, #8b6f47 0%, #6b5438 100%);
+  color: white;
+  border: none;
+  padding: 0.8rem 1.5rem;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-top: 0.5rem;
+}
+
+.hotel-book-btn:hover {
+  background: linear-gradient(135deg, #9b7f57 0%, #7b6448 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(139, 111, 71, 0.3);
+}
+
+@media (max-width: 968px) {
+  .popular-hotels {
+    padding: 3rem 0;
+  }
+  
+  .section-title {
+    font-size: 1.5rem;
+    margin-bottom: 2rem;
+  }
+  
+  .hotels-grid {
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .popular-hotels {
+    padding: 2rem 0;
+  }
+  
+  .section-title {
+    font-size: 1.2rem;
+  }
+  
+  .hotels-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
