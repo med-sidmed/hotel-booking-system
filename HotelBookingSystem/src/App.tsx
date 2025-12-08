@@ -1,23 +1,12 @@
-import Header from './components/Header'
-import Hero from './components/Hero'
-import PopularHotels from './components/PopularHotels'
-import WhyChooseUs from './components/WhyChooseUs'
-import SummerOffer from './components/SummerOffer'
-import Testimonials from './components/Testimonials'
-import Footer from './components/Footer'
+import React from 'react'
 import './App.css'
+import HomePage from './pages/HomePage'
 
 function App() {
   return (
     <div className="app">
-      <Header />
-      <Hero />
-      <PopularHotels />
-      <WhyChooseUs />
-      <SummerOffer />
-      <Testimonials />
-      <Footer />
-    </div>
+      <HomePage/> 
+  </div>
   )
 }
 
