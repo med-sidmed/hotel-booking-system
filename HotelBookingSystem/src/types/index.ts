@@ -1,28 +1,31 @@
+export interface Room {
+  id: number | string;
+  hotelId: number | string;
+  type: string;
+  description?: string;
+  price: number;
+  capacity: number;
+  amenities: string[];
+  images: string[];
+  available: boolean;
+}
+
 export interface Hotel {
   id: number | string;
   name: string;
   location: string;
   description: string;
-  reviews: number;
+  reviews?: number;
   image: string;
   pricePerNight?: number;
+  rooms: Room[];
 }
 
-export interface Room {
-  id: number | string;
-  hotelId: number | string;
-  type: string; // e.g., "Standard", "Deluxe", "Suite"
-  price: number;
-  capacity: number;
-  amenities: string[];
-  image: string;
-  available: boolean;
-}
-
-export interface User {
+export interface UserLogin {
   id: number | string;
   name: string;
   email: string;
+  password: string;
   role: 'USER' | 'ADMIN';
 }
 
@@ -33,5 +36,5 @@ export interface Booking {
   checkIn: string;
   checkOut: string;
   totalPrice: number;
-  status: 'CONFIRMED' | 'PENDING' | 'CANCELLED';
+  status: 'CONFIRMED' | 'PENDING' | 'CANCELLED' | 'COMPLETED';
 }

@@ -1,30 +1,36 @@
-/* import { useParams } from 'react-router-dom'; */ // Uncomment
 import Header from "../components/Header";
- import type { Room } from '../types';
+import { Navigate, useNavigate, useParams } from 'react-router-dom';
+import { hotels } from "../data/mockData";
 
 export default function RoomDetailsPage() {
-  /* const { id } = useParams<{ id: string }>(); */
-  
-  // Mock data for a single room
-  const room: Room = {
-    id: 1,
-    hotelId: 1,
-    type: "Deluxe Suite",
-    price: 250,
-    capacity: 2,
-    amenities: ["WiFi", "Jacuzzi", "Ocean View", "King Bed"],
-    image: "https://images.unsplash.com/photo-1590490360182-f33d5e6a385c?w=800&h=600&fit=crop",
-    available: true
-  };
+  const navigate = useNavigate();
+  const { hotelId, roomId } = useParams<{ hotelId: string; roomId: string }>();
+
+  // Find the hotel and then the room
+  const hotel = hotels.find((h) => h.id.toString() === hotelId);
+  const room = hotel?.rooms.find((r) => r.id.toString() === roomId);
+
+  if (!hotel || !room) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center">
+         <div className="flex-grow flex items-center justify-center space-x-4 flex-col">
+                  <button className="bg-[#6B5434] hover:bg-[#5B4424] text-white px-8 py-3 rounded-md font-bold transition-colors" onClick={() => navigate("/")}>Retour à la page d'accueil</button>
+          <h2 className="text-2xl font-bold text-gray-800">Room not found</h2>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Header/>
+      <div>
+        <h1 className="text-3xl font-bold text-gray-900">Bienvenue sur {hotel.name} - Room {room.type}</h1>
+      </div>
       <div className="max-w-7xl mx-auto px-4 py-8">
         <div className="bg-white rounded-lg shadow-lg overflow-hidden">
           <div className="relative h-96">
             <img 
-              src={room.image} 
+              src={room.images[0]} 
               alt={room.type} 
               className="w-full h-full object-cover"
             />
@@ -34,12 +40,24 @@ export default function RoomDetailsPage() {
           </div>
           
           <div className="p-8">
-            <h1 className="text-3xl font-bold text-gray-900 mb-4">{room.type}</h1>
+            <div className="flex justify-between items-start mb-4">
+               <div>
+                  <h1 className="text-3xl font-bold text-gray-900">{room.type}</h1>
+                  <p className="text-gray-500 mt-1">at {hotel.name}</p>
+               </div>
+            </div>
+            
+            {/* Image Gallery */}
+            <div className="grid grid-cols-4 gap-4 mb-8">
+              {room.images.map((img, idx) => (
+                <img key={idx} src={img} alt={`Room view ${idx + 1}`} className="w-full h-24 object-cover rounded-lg cursor-pointer hover:opacity-80 transition-opacity" />
+              ))}
+            </div>
             
             <div className="mb-8">
               <h2 className="text-xl font-semibold mb-4">Amenities</h2>
               <div className="flex flex-wrap gap-2">
-                {room.amenities.map((amenity, index) => (
+                {room.amenities?.map((amenity, index) => (
                   <span 
                     key={index}
                     className="bg-indigo-100 text-indigo-800 px-3 py-1 rounded-full text-sm"
@@ -61,6 +79,7 @@ export default function RoomDetailsPage() {
               <button 
                 className="bg-[#6B5434] hover:bg-[#5B4424] text-white px-8 py-3 rounded-md font-bold transition-colors"
                 disabled={!room.available}
+                onClick={() => alert('Proceed to booking flow...')}
               >
                 Book This Room
               </button>

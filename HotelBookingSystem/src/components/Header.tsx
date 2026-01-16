@@ -1,6 +1,8 @@
 import './Header.css';
+import { useNavigate } from 'react-router-dom';
 
 const Header = () => {
+    const navigate = useNavigate();
   return (
     <header className="header">
       <div className="header-top">
@@ -14,11 +16,9 @@ const Header = () => {
             </div>
           </div>
           <div className="header-top-right">
-            <a href="#" className="icon-link">📞</a>
-            <a href="#" className="icon-link">🔍</a>
-            <button className="login-btn">Connexion</button>
-            <button className="book-now-btn">Réserver maintenant</button>
-          </div>
+        
+            <button className="login-btn" onClick={() => navigate('/login')}>Connexion</button>
+           </div>
         </div>
       </div>
       <nav className="main-nav">

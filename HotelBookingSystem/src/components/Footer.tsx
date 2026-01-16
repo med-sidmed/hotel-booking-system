@@ -18,6 +18,7 @@ const Footer = () => {
 
   return (
     <footer className="footer">
+    
       <div className="back-to-top">
         <button onClick={scrollToTop}>Retour en haut</button>
       </div>
@@ -74,6 +75,8 @@ const Footer = () => {
           <p>© LUXOTEL - Votre compagnon de voyage de confiance depuis 2020</p>
         </div>
       </div>
+
+     
     </footer>
   );
 };

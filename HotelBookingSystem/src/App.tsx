@@ -8,6 +8,7 @@ import UserProfilePage from './pages/UserProfilePage';
 import HomePage from './pages/HomePage';
 import ContactPage from './pages/ContactPage';
 import MyBookingsPage from './pages/MyBookingsPage';
+import HotelDetailsPage from './pages/HotelDetailsPage';
 
 function App() {
   return (
@@ -15,11 +16,12 @@ function App() {
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/hotels" element={<HotelsResort />} />
+        <Route path="/hotels/:id" element={<HotelDetailsPage />} />
         <Route path="/contact" element={<ContactPage />} />
         <Route path="/my-bookings" element={<MyBookingsPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
-        <Route path="/room/:id" element={<RoomDetailsPage />} />
+        <Route path="/hotels/:hotelId/rooms/:roomId" element={<RoomDetailsPage />} />
         <Route path="/booking" element={<BookingPage />} />
         <Route path="/profile" element={<UserProfilePage />} />
       </Routes>

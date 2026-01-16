@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import './Hero.css';
 
 const Hero = () => {
@@ -10,10 +11,19 @@ const Hero = () => {
     rooms: '1'
   });
 
+  const navigate = useNavigate();
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Recherche:', searchData);
-    // Handle search logic here
+    const queryParams = new URLSearchParams({
+      destination: searchData.destination,
+      checkIn: searchData.checkIn,
+      checkOut: searchData.checkOut,
+      persons: searchData.persons,
+      rooms: searchData.rooms
+    }).toString();
+    console.log('Redirecting to search:', queryParams);
+    navigate(`/hotels?${queryParams}`);
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {

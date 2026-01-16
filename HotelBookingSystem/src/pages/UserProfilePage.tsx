@@ -1,12 +1,13 @@
 import Header from "../components/Header";
-import type { Booking, User } from '../types';
+import type { Booking, UserLogin } from '../types';
 
 export default function UserProfilePage() {
   // Mock data
-  const user: User = {
+  const user: UserLogin = {
     id: 1,
     name: "John Doe",
     email: "john@example.com",
+    password: "password",
     role: "USER"
   };
 
