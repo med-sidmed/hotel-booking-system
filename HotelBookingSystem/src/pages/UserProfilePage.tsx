@@ -51,13 +51,13 @@ export default function UserProfilePage() {
               </div>
               <div className="space-y-2">
                  <button className="w-full text-left px-4 py-2 rounded hover:bg-gray-50 text-gray-700 font-medium">
-                   Edit Profile
+                   Modifier le profil
                  </button>
                  <button className="w-full text-left px-4 py-2 rounded hover:bg-gray-50 text-gray-700 font-medium">
-                   Change Password
+                   Changer le mot de passe
                  </button>
                  <button className="w-full text-left px-4 py-2 rounded hover:bg-gray-50 text-red-600 font-medium">
-                   Sign Out
+                   Se déconnecter
                  </button>
               </div>
             </div>
@@ -67,14 +67,14 @@ export default function UserProfilePage() {
           <div className="md:col-span-2">
             <div className="bg-white rounded-lg shadow overflow-hidden">
               <div className="px-6 py-4 border-b border-gray-200">
-                <h3 className="text-lg font-bold text-gray-900">My Bookings</h3>
+                <h3 className="text-lg font-bold text-gray-900">Mes Réservations</h3>
               </div>
               <div className="divide-y divide-gray-200">
                 {bookings.map((booking) => (
                   <div key={booking.id} className="p-6">
                     <div className="flex justify-between items-start">
                       <div>
-                        <h4 className="text-lg font-semibold text-gray-900">Booking #{booking.id}</h4>
+                        <h4 className="text-lg font-semibold text-gray-900">Réservation #{booking.id}</h4>
                         <p className="text-sm text-gray-500 mt-1">
                           {booking.checkIn} — {booking.checkOut}
                         </p>
@@ -82,13 +82,13 @@ export default function UserProfilePage() {
                       <span className={`px-3 py-1 rounded-full text-xs font-semibold
                         ${booking.status === 'CONFIRMED' ? 'bg-green-100 text-green-800' : 
                           booking.status === 'PENDING' ? 'bg-yellow-100 text-yellow-800' : 'bg-gray-100 text-gray-800'}`}>
-                        {booking.status}
+                        {booking.status === 'CONFIRMED' ? 'CONFIRMÉ' : booking.status === 'PENDING' ? 'EN ATTENTE' : booking.status}
                       </span>
                     </div>
                     <div className="mt-4 flex justify-between items-center">
-                      <span className="font-bold text-gray-900">${booking.totalPrice}</span>
+                      <span className="font-bold text-gray-900">{booking.totalPrice}€</span>
                       <button className="text-[#6B5434] hover:text-[#5B4424] text-sm font-medium">
-                        View Details
+                        Voir les détails
                       </button>
                     </div>
                   </div>

@@ -34,10 +34,8 @@ const Hero = () => {
   };
 
   return (
-    <section className="hero">
-      <div className="hero-background">
-        <div className="hero-overlay"></div>
-      </div>
+    <section className="hero relative h-[600px] w-full bg-cover bg-center" style={{backgroundImage: "url('/hero-bg.png')"}}>
+      <div className="hero-overlay absolute inset-0 bg-black/40"></div>
       <div className="hero-content">
         <div className="hero-text">
           <h1>Réservez plus intelligemment, voyagez mieux</h1>

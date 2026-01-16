@@ -36,19 +36,19 @@ export default function HotelDetailsPage() {
 
       <div className="max-w-7xl mx-auto px-4 py-12">
         <div className="bg-white rounded-lg shadow-lg p-8 mb-12">
-          <h2 className="text-2xl font-bold mb-4">About {hotel.name}</h2>
+          <h2 className="text-2xl font-bold mb-4">À propos de {hotel.name}</h2>
           <p className="text-gray-600 leading-relaxed mb-6">
             {hotel.description}
           </p>
           <div className="flex items-center gap-4">
             <span className="flex items-center text-yellow-500">
                <span className="text-xl font-bold mr-1">★</span>
-               {hotel.reviews} review(s)
+               {hotel.reviews} avis
             </span>
           </div>
         </div>
 
-        <h2 className="text-3xl font-bold mb-8">Available Rooms</h2>
+        <h2 className="text-3xl font-bold mb-8">Chambres disponibles</h2>
         
         {hotel.rooms.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -57,7 +57,7 @@ export default function HotelDetailsPage() {
                 <div className="h-56 relative">
                   <img src={room.images[0]} alt={room.type} className="w-full h-full object-cover" />
                   <div className="absolute top-4 right-4 bg-white/90 px-3 py-1 rounded-full font-bold text-[#6B5434]">
-                    ${room.price} / night
+                    {room.price}€ / nuit
                   </div>
                 </div>
                 <div className="p-6">
@@ -70,7 +70,7 @@ export default function HotelDetailsPage() {
                     ))}
                     {room.amenities && room.amenities.length > 3 && (
                       <span className="bg-gray-100 text-gray-600 text-xs px-2 py-1 rounded">
-                        +{room.amenities.length - 3} more
+                        +{room.amenities.length - 3} de plus
                       </span>
                     )}
                   </div>
@@ -78,7 +78,7 @@ export default function HotelDetailsPage() {
                     onClick={() => navigate(`/hotels/${hotel.id}/rooms/${room.id}`)}
                     className="w-full bg-[#6B5434] hover:bg-[#5B4424] text-white py-3 rounded-md font-semibold transition-colors"
                   >
-                    View Details
+                    Voir les détails
                   </button>
                 </div>
               </div>
@@ -86,7 +86,7 @@ export default function HotelDetailsPage() {
           </div>
         ) : (
           <div className="text-center py-12 bg-white rounded-lg">
-            <p className="text-gray-500 text-lg">No rooms available at the moment.</p>
+            <p className="text-gray-500 text-lg">Aucune chambre disponible pour le moment.</p>
           </div>
         )}
       </div>

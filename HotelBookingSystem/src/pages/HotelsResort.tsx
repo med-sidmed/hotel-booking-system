@@ -4,12 +4,12 @@ import Footer from "../components/Footer";
 import type { Hotel } from "../types";
 import { hotels } from "../data/mockData";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { useFavorites } from "../context/FavoritesContext";
 
 // Composant SearchBar
 // Composant SearchBar
 function SearchBar() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const navigate = useNavigate();
   const [filters, setFilters] = useState({
     destination: searchParams.get('destination') || '',
     checkIn: searchParams.get('checkIn') || '',
@@ -42,7 +42,7 @@ function SearchBar() {
           <input
             type="date"
             className="bg-white/90 text-gray-700 px-4 py-3 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-400"
-            placeholder="Check-in"
+            placeholder="Arrivée"
             value={filters.checkIn}
             onChange={(e) => setFilters({...filters, checkIn: e.target.value})}
           />
@@ -50,7 +50,7 @@ function SearchBar() {
           <input
             type="date"
             className="bg-white/90 text-gray-700 px-4 py-3 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-400"
-            placeholder="Check-out"
+            placeholder="Départ"
             value={filters.checkOut}
             onChange={(e) => setFilters({...filters, checkOut: e.target.value})}
           />
@@ -60,17 +60,17 @@ function SearchBar() {
             value={filters.rooms}
             onChange={(e) => setFilters({...filters, rooms: e.target.value})}
           >
-            <option value="">Rooms</option>
-            <option value="1">1 Room</option>
-            <option value="2">2 Rooms</option>
-            <option value="3">3+ Rooms</option>
+            <option value="">Chambres</option>
+            <option value="1">1 Chambre</option>
+            <option value="2">2 Chambres</option>
+            <option value="3">3+ Chambres</option>
           </select>
 
           <button 
             onClick={handleSearch}
             className="bg-[#6B5434] hover:bg-[#5B4424] text-white font-semibold px-6 py-3 rounded-md transition-colors"
           >
-            Search
+            Rechercher
           </button>
         </div>
       </div>
@@ -108,7 +108,7 @@ function HotelCard({ hotel }: HotelCardProps) {
                 </span>
               ))}
               <span className="ml-2 text-sm opacity-90">
-                ({hotel.reviews || 0} reviews)
+                ({hotel.reviews || 0} avis)
               </span>
             </div>
 
@@ -133,12 +133,12 @@ function HotelCard({ hotel }: HotelCardProps) {
           </div>
 
           <div className="mt-4 flex justify-between items-center">
-            <span className="text-sm font-medium">{hotel.rooms.length} Rooms Available</span>
+            <span className="text-sm font-medium">{hotel.rooms.length} Chambres dispo</span>
             <button 
               onClick={() => navigate(`/hotels/${hotel.id}`)}
               className="bg-[#6B5434] hover:bg-[#5B4424] text-white px-6 py-2 rounded-md text-sm font-semibold transition-colors"
             >
-              See Rooms
+              Voir les chambres
             </button>
           </div>
         </div>
@@ -168,10 +168,10 @@ export default function HotelListingPage() {
       <div className="max-w-7xl mx-auto px-4 py-12">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-800 mb-2">
-            Discover Our Hotels
+            Découvrez nos hôtels
           </h1>
           <p className="text-gray-600">
-            Explore {filteredHotels.length} luxury destinations worldwide
+            Explorez {filteredHotels.length} destinations de luxe dans le monde
           </p>
         </div>
 
@@ -183,8 +183,8 @@ export default function HotelListingPage() {
           </div>
         ) : (
            <div className="text-center py-12">
-            <h3 className="text-xl text-gray-600">No hotels found matching your criteria.</h3>
-            <p className="text-gray-500 mt-2">Try adjusting your search filters.</p>
+            <h3 className="text-xl text-gray-600">Aucun hôtel trouvé correspondant à vos critères.</h3>
+            <p className="text-gray-500 mt-2">Essayez d'ajuster vos filtres de recherche.</p>
           </div>
         )}
       </div>

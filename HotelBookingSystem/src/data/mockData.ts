@@ -3,114 +3,98 @@ import type { Hotel } from "../types";
 export const hotels: Hotel[] = [
     {
         id: 1,
-        name: "Fairmont Nusa Dua International",
-        location: "Nusa Dua, Bali, Indonesia",
-        description: "Experience ultimate luxury with stunning ocean views, world-class amenities, and exceptional service in the heart of Bali.",
-        reviews: 1234,
-        image: "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&h=600&fit=crop",
+        name: "Hôtel Élégance Royal",
+        location: "Tevragh Zeina, Nouakchott",
+        rating: 4.8,
+        reviews: 124,
+        image: "https://images.unsplash.com/photo-1566073771259-6a8506099945?ixlib=rb-4.0.3&auto=format&fit=crop&w=1470&q=80",
+        price: 250,
+        description: "Découvrez le luxe comme jamais auparavant au cœur de Nouakchott. L'Hôtel Élégance Royal offre une vue imprenable sur la ville, une cuisine exquise et des équipements de classe mondiale.",
         rooms: [
             {
                 id: 101,
                 hotelId: 1,
-                type: "Ocean View Suite",
+                type: "Suite Deluxe Océan",
                 price: 350,
                 capacity: 2,
-                amenities: ["Ocean View", "King Bed", "Jacuzzi", "WiFi"],
+                amenities: ["Vue Océan", "Lit King Size", "Jacuzzi Privé", "Service en Chambre 24/7"],
+                available: true,
                 images: [
-                    "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&h=600&fit=crop",
-                    "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&h=600&fit=crop",
-                    "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&h=600&fit=crop"
-                ],
-                available: true
+                    "https://images.unsplash.com/photo-1578683010236-d716f9a3f461?ixlib=rb-4.0.3&auto=format&fit=crop&w=1470&q=80",
+                    "https://images.unsplash.com/photo-1590490360182-c33d57733427?ixlib=rb-4.0.3&auto=format&fit=crop&w=1470&q=80",
+                    "https://images.unsplash.com/photo-1560185007-c5ca9d2c014d?ixlib=rb-4.0.3&auto=format&fit=crop&w=1470&q=80",
+                    "https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?ixlib=rb-4.0.3&auto=format&fit=crop&w=1470&q=80"
+                ]
             },
             {
                 id: 102,
                 hotelId: 1,
-                type: "Garden Villa",
-                price: 500,
-                capacity: 4,
-                amenities: ["Private Pool", "Garden View", "Butlers Service", "WiFi"],
+                type: "Chambre Standard Ville",
+                price: 180,
+                capacity: 2,
+                amenities: ["Vue Ville", "Lit Queen Size", "Wi-Fi Gratuit", "Petit-déjeuner Inclus"],
+                available: true,
                 images: [
-                    "https://images.unsplash.com/photo-1582719508461-905c673771fd?w=800&h=600&fit=crop",
-                    "https://images.unsplash.com/photo-1582719508461-905c673771fd?w=800&h=600&fit=crop",
-                    "https://images.unsplash.com/photo-1582719508461-905c673771fd?w=800&h=600&fit=crop"
-                ],
-                available: true
+                    "https://images.unsplash.com/photo-1616594039964-40891a90c398?ixlib=rb-4.0.3&auto=format&fit=crop&w=1470&q=80"
+                ]
             }
         ]
     },
     {
         id: 2,
-        name: "Atlantis Waterfront Resort",
-        location: "Dubai Marina, UAE",
-        description: "An iconic waterfront destination offering breathtaking views, luxurious accommodations, and unforgettable experiences.",
-        reviews: 2156,
-        image: "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=800&h=600&fit=crop",
+        name: "Station Balnéaire Palmier",
+        location: "Route de la Plage, Nouadhibou",
+        rating: 4.5,
+        reviews: 89,
+        image: "https://images.unsplash.com/photo-1582719508461-905c673771fd?ixlib=rb-4.0.3&auto=format&fit=crop&w=1325&q=80",
+        price: 180,
+        description: "Détendez-vous au bord de l'océan dans notre magnifique station balnéaire. Profitez du soleil, du sable et de la sérénité avec nos villas privées en bord de mer.",
         rooms: [
             {
                 id: 201,
                 hotelId: 2,
-                type: "Royal Penthouse",
-                price: 1200,
-                capacity: 6,
-                amenities: ["Panoramic View", "Private Elevator", "Cinema", "Gym"],
-                images: ["https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=800&h=600&fit=crop"],
-                available: true
+                type: "Villa Bord de Mer",
+                price: 450,
+                capacity: 4,
+                amenities: ["Accès Plage", "Piscine Privée", "Cuisine", "Terrasse Extérieure"],
+                available: true,
+                images: [
+                    "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?ixlib=rb-4.0.3&auto=format&fit=crop&w=1470&q=80"
+                ]
             }
         ]
     },
     {
         id: 3,
-        name: "Pullman Palace Suite",
-        location: "Paris, France",
-        description: "Classic Parisian elegance meets modern comfort. Perfectly located near the Eiffel Tower and Champs-Élysées.",
-        reviews: 987,
-        image: "https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?w=800&h=600&fit=crop",
+        name: "Retraite Oasis du Désert",
+        location: "Atar, Adrar",
+        rating: 4.7,
+        reviews: 56,
+        image: "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?ixlib=rb-4.0.3&auto=format&fit=crop&w=1470&q=80",
+        price: 200,
+        description: "Échappez-vous vers la tranquillité du désert. Notre oasis offre un mélange unique de confort moderne et d'hospitalité traditionnelle mauritanienne.",
         rooms: []
     },
     {
         id: 4,
-        name: "Royal Continental Lisbon",
-        location: "Lisbon, Portugal",
-        description: "Historic charm blended with contemporary luxury in Portugal's captivating capital city.",
-        reviews: 1543,
-        image: "https://images.unsplash.com/photo-1445019980597-93fa8acb246c?w=800&h=600&fit=crop",
+        name: "Auberge Vue sur le Fleuve",
+        location: "Rosso, Trarza",
+        rating: 4.3,
+        reviews: 42,
+        image: "https://images.unsplash.com/photo-1564501049412-61c2a3083791?ixlib=rb-4.0.3&auto=format&fit=crop&w=1632&q=80",
+        price: 120,
+        description: "Profitez de la brise apaisante du fleuve Sénégal. Parfait pour les amoureux de la nature et ceux qui recherchent une escapade paisible.",
         rooms: []
     },
     {
         id: 5,
-        name: "Hotel Vista Premium",
-        location: "Tokyo, Japan",
-        description: "Modern Japanese hospitality with panoramic city views and authentic cultural experiences.",
-        reviews: 1876,
-        image: "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=800&h=600&fit=crop",
-        rooms: []
-    },
-    {
-        id: 6,
-        name: "Hotel Des Arts Miami",
-        location: "Miami Beach, Florida",
-        description: "Art deco luxury on pristine beaches with vibrant nightlife and world-class dining.",
-        reviews: 2341,
-        image: "https://images.unsplash.com/photo-1571003123894-1f0594d2b5d9?w=800&h=600&fit=crop",
-        rooms: []
-    },
-    {
-        id: 7,
-        name: "Royal One Bloomsbury",
-        location: "London, United Kingdom",
-        description: "British sophistication in the heart of London, steps from iconic landmarks and cultural treasures.",
-        reviews: 1654,
-        image: "https://images.unsplash.com/photo-1578683010236-d716f9a3f461?w=800&h=600&fit=crop",
-        rooms: []
-    },
-    {
-        id: 8,
-        name: "Hotel Diva Museum",
-        location: "Florence, Italy",
-        description: "Renaissance beauty and Italian luxury combined in the cradle of art and culture.",
-        reviews: 1432,
-        image: "https://images.unsplash.com/photo-1564501049412-61c2a3083791?w=800&h=600&fit=crop",
+        name: "Hôtel Le Tichit",
+        location: "Centre Ville, Nouakchott",
+        rating: 4.0,
+        reviews: 15,
+        image: "https://images.unsplash.com/photo-1455587734955-081b22074882?ixlib=rb-4.0.3&auto=format&fit=crop&w=1470&q=80",
+        price: 90,
+        description: "Un hôtel confortable et abordable au cœur de la ville.",
         rooms: []
     }
 ];

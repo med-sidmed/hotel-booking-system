@@ -1,6 +1,17 @@
-import Header from "../components/Header";
-import { Navigate, useNavigate, useParams } from 'react-router-dom';
+import { useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import { hotels } from "../data/mockData";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+  DialogClose
+} from '../components/ui/dialog';
+import { Button } from '../components/ui/button';
 
 export default function RoomDetailsPage() {
   const navigate = useNavigate();
@@ -15,7 +26,7 @@ export default function RoomDetailsPage() {
       <div className="min-h-screen flex flex-col items-center justify-center">
          <div className="flex-grow flex items-center justify-center space-x-4 flex-col">
                   <button className="bg-[#6B5434] hover:bg-[#5B4424] text-white px-8 py-3 rounded-md font-bold transition-colors" onClick={() => navigate("/")}>Retour à la page d'accueil</button>
-          <h2 className="text-2xl font-bold text-gray-800">Room not found</h2>
+          <h2 className="text-2xl font-bold text-gray-800">Chambre introuvable</h2>
         </div>
       </div>
     );
@@ -24,7 +35,7 @@ export default function RoomDetailsPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">Bienvenue sur {hotel.name} - Room {room.type}</h1>
+        <h1 className="text-3xl font-bold text-gray-900 px-4 pt-8 max-w-7xl mx-auto">Bienvenue sur {hotel.name} - Chambre {room.type}</h1>
       </div>
       <div className="max-w-7xl mx-auto px-4 py-8">
         <div className="bg-white rounded-lg shadow-lg overflow-hidden">
@@ -35,7 +46,7 @@ export default function RoomDetailsPage() {
               className="w-full h-full object-cover"
             />
             <div className="absolute top-4 right-4 bg-white px-4 py-2 rounded-full font-bold text-gray-900 shadow">
-              ${room.price} / night
+              {room.price}€ / nuit
             </div>
           </div>
           
@@ -43,24 +54,24 @@ export default function RoomDetailsPage() {
             <div className="flex justify-between items-start mb-4">
                <div>
                   <h1 className="text-3xl font-bold text-gray-900">{room.type}</h1>
-                  <p className="text-gray-500 mt-1">at {hotel.name}</p>
+                  <p className="text-gray-500 mt-1">à {hotel.name}</p>
                </div>
             </div>
             
             {/* Image Gallery */}
             <div className="grid grid-cols-4 gap-4 mb-8">
               {room.images.map((img, idx) => (
-                <img key={idx} src={img} alt={`Room view ${idx + 1}`} className="w-full h-24 object-cover rounded-lg cursor-pointer hover:opacity-80 transition-opacity" />
+                <img key={idx} src={img} alt={`Vue de la chambre ${idx + 1}`} className="w-full h-24 object-cover rounded-lg cursor-pointer hover:opacity-80 transition-opacity" />
               ))}
             </div>
             
             <div className="mb-8">
-              <h2 className="text-xl font-semibold mb-4">Amenities</h2>
+              <h2 className="text-xl font-semibold mb-4">Équipements</h2>
               <div className="flex flex-wrap gap-2">
                 {room.amenities?.map((amenity, index) => (
                   <span 
                     key={index}
-                    className="bg-indigo-100 text-indigo-800 px-3 py-1 rounded-full text-sm"
+                    className="bg-[#F0E6D2] text-[#6B5434] px-3 py-1 rounded-full text-sm"
                   >
                     {amenity}
                   </span>
@@ -70,19 +81,13 @@ export default function RoomDetailsPage() {
 
             <div className="flex justify-between items-center border-t pt-8">
               <div>
-                <p className="text-gray-600">Capacity: {room.capacity} Guests</p>
+                <p className="text-gray-600">Capacité: {room.capacity} Personnes</p>
                 <p className={`font-semibold ${room.available ? 'text-green-600' : 'text-red-600'}`}>
-                  {room.available ? 'Available Now' : 'Currently Unavailable'}
+                  {room.available ? 'Disponible maintenant' : 'Actuellement indisponible'}
                 </p>
               </div>
               
-              <button 
-                className="bg-[#6B5434] hover:bg-[#5B4424] text-white px-8 py-3 rounded-md font-bold transition-colors"
-                disabled={!room.available}
-                onClick={() => alert('Proceed to booking flow...')}
-              >
-                Book This Room
-              </button>
+              <BookingModal room={room} hotelName={hotel.name} />
             </div>
           </div>
         </div>
@@ -90,3 +95,84 @@ export default function RoomDetailsPage() {
     </div>
   );
 }
+
+const BookingModal = ({ room, hotelName }: { room: any, hotelName: string }) => {
+    const [checkIn, setCheckIn] = useState('');
+    const [checkOut, setCheckOut] = useState('');
+    const [guests, setGuests] = useState('1');
+
+    const handleBooking = (e: React.FormEvent) => {
+        e.preventDefault();
+        alert(`Réservation confirmée pour ${hotelName} - ${room.type}\nDu: ${checkIn}\nAu: ${checkOut}\nInvités: ${guests}`);
+    };
+
+    return (
+        <Dialog>
+            <DialogTrigger asChild>
+                <button 
+                  className="bg-[#6B5434] hover:bg-[#5B4424] text-white px-8 py-3 rounded-md font-bold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={!room.available}
+                >
+                  Réserver cette chambre
+                </button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[425px] bg-white text-[#3d2817]">
+                <DialogHeader>
+                    <DialogTitle>Réserver {room.type}</DialogTitle>
+                    <DialogDescription>
+                        {hotelName} - {room.price}€ / nuit
+                    </DialogDescription>
+                </DialogHeader>
+                <form onSubmit={handleBooking} className="grid gap-4 py-4">
+                    <div className="grid grid-cols-4 items-center gap-4">
+                        <label htmlFor="checkIn" className="text-right font-medium">
+                            Arrivée
+                        </label>
+                        <input
+                            id="checkIn"
+                            type="date"
+                            className="col-span-3 border border-gray-300 rounded px-3 py-2"
+                            value={checkIn}
+                            onChange={(e) => setCheckIn(e.target.value)}
+                            required
+                        />
+                    </div>
+                    <div className="grid grid-cols-4 items-center gap-4">
+                        <label htmlFor="checkOut" className="text-right font-medium">
+                            Départ
+                        </label>
+                        <input
+                            id="checkOut"
+                            type="date"
+                            className="col-span-3 border border-gray-300 rounded px-3 py-2"
+                            value={checkOut}
+                            onChange={(e) => setCheckOut(e.target.value)}
+                            required
+                        />
+                    </div>
+                    <div className="grid grid-cols-4 items-center gap-4">
+                        <label htmlFor="guests" className="text-right font-medium">
+                            Invités
+                        </label>
+                        <select
+                            id="guests"
+                            className="col-span-3 border border-gray-300 rounded px-3 py-2"
+                            value={guests}
+                            onChange={(e) => setGuests(e.target.value)}
+                        >
+                            {[...Array(room.capacity)].map((_, i) => (
+                                <option key={i + 1} value={i + 1}>{i + 1} Personne(s)</option>
+                            ))}
+                        </select>
+                    </div>
+                    <DialogFooter>
+                        <DialogClose asChild>
+                             <Button type="button" variant="outline" className="border-gray-300 text-gray-700 hover:bg-gray-50">Annuler</Button>
+                        </DialogClose>
+                        <Button type="submit" className="bg-[#6B5434] hover:bg-[#5B4424] text-white">Confirmer la réservation</Button>
+                    </DialogFooter>
+                </form>
+            </DialogContent>
+        </Dialog>
+    );
+};

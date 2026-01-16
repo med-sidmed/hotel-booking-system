@@ -11,11 +11,12 @@ export interface Room {
 }
 
 export interface Hotel {
-  id: number | string;
+  id: number;
   name: string;
   location: string;
   description: string;
-  reviews?: number;
+  rating: number;
+  reviews: number;
   image: string;
   pricePerNight?: number;
   rooms: Room[];

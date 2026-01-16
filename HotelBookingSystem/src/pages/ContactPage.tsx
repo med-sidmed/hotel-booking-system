@@ -35,9 +35,9 @@ export default function ContactPage() {
         {/* Hero Section */}
         <div className="bg-[#6B5434] text-white py-16">
           <div className="max-w-7xl mx-auto px-4 text-center">
-            <h1 className="text-4xl font-serif italic mb-4">Contact Us</h1>
+            <h1 className="text-4xl font-serif italic mb-4">Contactez-nous</h1>
             <p className="text-lg opacity-90 max-w-2xl mx-auto">
-              We are here to assist you. Reach out to us for any inquiries, reservations, or feedback.
+              Nous sommes là pour vous aider. Contactez-nous pour toute demande, réservation ou commentaire.
             </p>
           </div>
         </div>
@@ -45,7 +45,7 @@ export default function ContactPage() {
         <div className="max-w-7xl mx-auto px-4 py-12 grid grid-cols-1 md:grid-cols-2 gap-12">
           {/* Contact Information */}
           <div>
-            <h2 className="text-2xl font-bold text-gray-800 mb-6">Get in Touch</h2>
+            <h2 className="text-2xl font-bold text-gray-800 mb-6">Entrez en contact</h2>
             <div className="space-y-6">
               <div className="flex items-start">
                 <div className="bg-yellow-100 p-3 rounded-full mr-4 text-[#6B5434]">
@@ -55,8 +55,8 @@ export default function ContactPage() {
                   </svg>
                 </div>
                 <div>
-                  <h3 className="font-semibold text-lg">Address</h3>
-                  <p className="text-gray-600">123 Luxury Avenue, Hotel District<br />Paris, France 75001</p>
+                  <h3 className="font-semibold text-lg">Adresse</h3>
+                  <p className="text-gray-600">123 Avenue de Luxe, Quartier des Hôtels<br />Paris, France 75001</p>
                 </div>
               </div>
 
@@ -67,7 +67,7 @@ export default function ContactPage() {
                   </svg>
                 </div>
                 <div>
-                  <h3 className="font-semibold text-lg">Phone</h3>
+                  <h3 className="font-semibold text-lg">Téléphone</h3>
                   <p className="text-gray-600">+1 (555) 123-4567</p>
                   <p className="text-gray-600">+1 (555) 987-6543</p>
                 </div>
@@ -90,10 +90,10 @@ export default function ContactPage() {
 
           {/* Contact Form */}
           <div className="bg-white rounded-lg shadow-lg p-8">
-            <h2 className="text-2xl font-bold text-gray-800 mb-6">Send us a Message</h2>
+            <h2 className="text-2xl font-bold text-gray-800 mb-6">Envoyez-nous un message</h2>
             <form onSubmit={handleSubmit} className="space-y-6">
               <div>
-                <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+                <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">Nom</label>
                 <input
                   type="text"
                   id="name"
@@ -119,7 +119,7 @@ export default function ContactPage() {
               </div>
 
               <div>
-                <label htmlFor="subject" className="block text-sm font-medium text-gray-700 mb-1">Subject</label>
+                <label htmlFor="subject" className="block text-sm font-medium text-gray-700 mb-1">Sujet</label>
                 <input
                   type="text"
                   id="subject"
@@ -148,7 +148,7 @@ export default function ContactPage() {
                 type="submit"
                 className="w-full bg-[#6B5434] hover:bg-[#5B4424] text-white font-bold py-3 rounded-md transition-colors shadow-md hover:shadow-lg"
               >
-                Send Message
+                Envoyer le message
               </button>
             </form>
           </div>
