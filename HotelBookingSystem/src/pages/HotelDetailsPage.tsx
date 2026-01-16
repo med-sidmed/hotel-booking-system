@@ -2,11 +2,16 @@ import Header from "../components/Header";
 import Footer from "../components/Footer";
 import { useParams, useNavigate } from "react-router-dom";
 import { hotels } from "../data/mockData";
+import { useReviews } from "../context/ReviewsContext";
+import { ReviewList } from "../components/reviews/ReviewList";
+import { AddReviewDialog } from "../components/reviews/AddReviewDialog";
 
 export default function HotelDetailsPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const hotel = hotels.find((h) => h.id.toString() === id);
+  const { getReviewsByHotelId } = useReviews();
+  const hotelReviews = hotel ? getReviewsByHotelId(hotel.id) : [];
 
   if (!hotel) {
     return (
@@ -89,6 +94,15 @@ export default function HotelDetailsPage() {
             <p className="text-gray-500 text-lg">Aucune chambre disponible pour le moment.</p>
           </div>
         )}
+
+        {/* Reviews Section */}
+        <div className="mt-16 border-t border-gray-200 pt-12">
+           <div className="flex justify-between items-center mb-8">
+              <h2 className="text-3xl font-bold text-gray-900">Avis des voyageurs</h2>
+              <AddReviewDialog hotelId={hotel.id} />
+           </div>
+           <ReviewList reviews={hotelReviews} />
+        </div>
       </div>
 
       <Footer />

@@ -1,17 +1,6 @@
-import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { hotels } from "../data/mockData";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-  DialogFooter,
-  DialogClose
-} from '../components/ui/dialog';
-import { Button } from '../components/ui/button';
+import { BookingModal } from '../components/booking/BookingModal';
 
 export default function RoomDetailsPage() {
   const navigate = useNavigate();
@@ -96,83 +85,4 @@ export default function RoomDetailsPage() {
   );
 }
 
-const BookingModal = ({ room, hotelName }: { room: any, hotelName: string }) => {
-    const [checkIn, setCheckIn] = useState('');
-    const [checkOut, setCheckOut] = useState('');
-    const [guests, setGuests] = useState('1');
 
-    const handleBooking = (e: React.FormEvent) => {
-        e.preventDefault();
-        alert(`Réservation confirmée pour ${hotelName} - ${room.type}\nDu: ${checkIn}\nAu: ${checkOut}\nInvités: ${guests}`);
-    };
-
-    return (
-        <Dialog>
-            <DialogTrigger asChild>
-                <button 
-                  className="bg-[#6B5434] hover:bg-[#5B4424] text-white px-8 py-3 rounded-md font-bold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  disabled={!room.available}
-                >
-                  Réserver cette chambre
-                </button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[425px] bg-white text-[#3d2817]">
-                <DialogHeader>
-                    <DialogTitle>Réserver {room.type}</DialogTitle>
-                    <DialogDescription>
-                        {hotelName} - {room.price}€ / nuit
-                    </DialogDescription>
-                </DialogHeader>
-                <form onSubmit={handleBooking} className="grid gap-4 py-4">
-                    <div className="grid grid-cols-4 items-center gap-4">
-                        <label htmlFor="checkIn" className="text-right font-medium">
-                            Arrivée
-                        </label>
-                        <input
-                            id="checkIn"
-                            type="date"
-                            className="col-span-3 border border-gray-300 rounded px-3 py-2"
-                            value={checkIn}
-                            onChange={(e) => setCheckIn(e.target.value)}
-                            required
-                        />
-                    </div>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                        <label htmlFor="checkOut" className="text-right font-medium">
-                            Départ
-                        </label>
-                        <input
-                            id="checkOut"
-                            type="date"
-                            className="col-span-3 border border-gray-300 rounded px-3 py-2"
-                            value={checkOut}
-                            onChange={(e) => setCheckOut(e.target.value)}
-                            required
-                        />
-                    </div>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                        <label htmlFor="guests" className="text-right font-medium">
-                            Invités
-                        </label>
-                        <select
-                            id="guests"
-                            className="col-span-3 border border-gray-300 rounded px-3 py-2"
-                            value={guests}
-                            onChange={(e) => setGuests(e.target.value)}
-                        >
-                            {[...Array(room.capacity)].map((_, i) => (
-                                <option key={i + 1} value={i + 1}>{i + 1} Personne(s)</option>
-                            ))}
-                        </select>
-                    </div>
-                    <DialogFooter>
-                        <DialogClose asChild>
-                             <Button type="button" variant="outline" className="border-gray-300 text-gray-700 hover:bg-gray-50">Annuler</Button>
-                        </DialogClose>
-                        <Button type="submit" className="bg-[#6B5434] hover:bg-[#5B4424] text-white">Confirmer la réservation</Button>
-                    </DialogFooter>
-                </form>
-            </DialogContent>
-        </Dialog>
-    );
-};

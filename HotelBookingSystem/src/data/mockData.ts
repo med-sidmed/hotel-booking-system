@@ -8,7 +8,7 @@ export const hotels: Hotel[] = [
         rating: 4.8,
         reviews: 124,
         image: "https://images.unsplash.com/photo-1566073771259-6a8506099945?ixlib=rb-4.0.3&auto=format&fit=crop&w=1470&q=80",
-        price: 250,
+        pricePerNight: 250,
         description: "Découvrez le luxe comme jamais auparavant au cœur de Nouakchott. L'Hôtel Élégance Royal offre une vue imprenable sur la ville, une cuisine exquise et des équipements de classe mondiale.",
         rooms: [
             {
@@ -47,7 +47,7 @@ export const hotels: Hotel[] = [
         rating: 4.5,
         reviews: 89,
         image: "https://images.unsplash.com/photo-1582719508461-905c673771fd?ixlib=rb-4.0.3&auto=format&fit=crop&w=1325&q=80",
-        price: 180,
+        pricePerNight: 180,
         description: "Détendez-vous au bord de l'océan dans notre magnifique station balnéaire. Profitez du soleil, du sable et de la sérénité avec nos villas privées en bord de mer.",
         rooms: [
             {
@@ -71,7 +71,7 @@ export const hotels: Hotel[] = [
         rating: 4.7,
         reviews: 56,
         image: "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?ixlib=rb-4.0.3&auto=format&fit=crop&w=1470&q=80",
-        price: 200,
+        pricePerNight: 200,
         description: "Échappez-vous vers la tranquillité du désert. Notre oasis offre un mélange unique de confort moderne et d'hospitalité traditionnelle mauritanienne.",
         rooms: []
     },
@@ -82,7 +82,7 @@ export const hotels: Hotel[] = [
         rating: 4.3,
         reviews: 42,
         image: "https://images.unsplash.com/photo-1564501049412-61c2a3083791?ixlib=rb-4.0.3&auto=format&fit=crop&w=1632&q=80",
-        price: 120,
+        pricePerNight: 120,
         description: "Profitez de la brise apaisante du fleuve Sénégal. Parfait pour les amoureux de la nature et ceux qui recherchent une escapade paisible.",
         rooms: []
     },
@@ -93,8 +93,60 @@ export const hotels: Hotel[] = [
         rating: 4.0,
         reviews: 15,
         image: "https://images.unsplash.com/photo-1455587734955-081b22074882?ixlib=rb-4.0.3&auto=format&fit=crop&w=1470&q=80",
-        price: 90,
+        pricePerNight: 90,
         description: "Un hôtel confortable et abordable au cœur de la ville.",
         rooms: []
+    } // End of hotel 5
+]; // Properly close hotels array
+
+// Mock Bookings
+export const mockBookings: any[] = [
+    {
+        id: "BK-001",
+        hotelId: 1,
+        userId: 101,
+        userName: "Sophie Martin",
+        roomType: "Suite Deluxe Océan",
+        checkIn: "2026-02-10",
+        checkOut: "2026-02-15",
+        totalPrice: 1750,
+        status: "CONFIRMED",
+        date: "2026-01-15"
+    },
+    {
+        id: "BK-002",
+        hotelId: 1,
+        userId: 102,
+        userName: "Pierre Dupont",
+        roomType: "Chambre Standard Ville",
+        checkIn: "2026-03-01",
+        checkOut: "2026-03-05",
+        totalPrice: 720,
+        status: "PENDING",
+        date: "2026-01-20"
+    },
+    {
+        id: "BK-003",
+        hotelId: 1,
+        userId: 103,
+        userName: "Jean Kevin",
+        roomType: "Suite Deluxe Océan",
+        checkIn: "2026-04-10",
+        checkOut: "2026-04-12",
+        totalPrice: 700,
+        status: "CANCELLED",
+        date: "2026-01-22"
+    },
+    {
+        id: "BK-004",
+        hotelId: 2, // Different hotel
+        userId: 104,
+        userName: "Marie Curie",
+        roomType: "Villa Bord de Mer",
+        checkIn: "2026-05-01",
+        checkOut: "2026-05-07",
+        totalPrice: 2700,
+        status: "CONFIRMED",
+        date: "2026-01-25"
     }
 ];
