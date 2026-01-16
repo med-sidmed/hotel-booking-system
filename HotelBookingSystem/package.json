@@ -18,8 +18,12 @@
     "@mui/styled-engine-sc": "^7.3.6",
     "@tailwindcss/vite": "^4.1.17",
     "headlessui": "^0.0.0",
+    "localforage": "^1.10.0",
+    "match-sorter": "^8.2.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
+    "react-router-dom": "^7.12.0",
+    "sort-by": "^1.2.0",
     "styled-components": "^6.1.19",
     "tailwindcss": "^4.1.17"
   },

@@ -14,7 +14,8 @@ const hotels: Hotel[] = [
     name: "Hôtel One - Nouakchott",
     location: "Nouakchott",
     description: "Hôtel confortable en bord de mer, parfait pour les familles.",
-    image: "hotel1"
+    image: "hotel1",
+    roo
   },
   {
     id: 2,

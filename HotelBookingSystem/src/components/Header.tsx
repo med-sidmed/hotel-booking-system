@@ -25,10 +25,10 @@ const Header = () => {
         <div className="nav-content">
           <div className="logo">LUXOTEL</div>
           <ul className="nav-menu">
-            <li><a href="#home">Accueil</a></li>
-            <li><a href="#hotels">Hôtels & Resorts</a></li>
-            <li><a href="#contact">Contact</a></li>
-            <li><a href="#booking">Ma Réservation</a></li>
+            <li><a href="/">Accueil</a></li>
+            <li><a href="/hotels">Hôtels & Resorts</a></li>
+            <li><a href="/contact">Contact</a></li>
+            <li><a href="/my-bookings">Ma Réservation</a></li>
           </ul>
         </div>
       </nav>

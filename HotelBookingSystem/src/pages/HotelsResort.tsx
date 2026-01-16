@@ -1,5 +1,5 @@
-import { useState } from "react";
-import NavBar from "../component/common/NavBar";
+import Header from "../components/Header";
+import type { Hotel } from "../types";
 
 // Composant SearchBar
 function SearchBar() {
@@ -42,8 +42,12 @@ function SearchBar() {
   );
 }
 
+interface HotelCardProps {
+  hotel: Hotel;
+}
+
 // Composant HotelCard
-function HotelCard({ hotel }) {
+function HotelCard({ hotel }: HotelCardProps) {
   return (
     <div className="bg-white rounded-lg overflow-hidden shadow-md hover:shadow-xl transition-shadow duration-300">
       <div className="flex flex-col md:flex-row">
@@ -406,7 +410,7 @@ export default function HotelListingPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <NavBar/>
+    <Header/>
       {/* Search Bar */}
       <SearchBar />
 
