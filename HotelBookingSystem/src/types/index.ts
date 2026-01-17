@@ -17,9 +17,14 @@ export interface Hotel {
   description: string;
   rating: number;
   reviews: number;
-  image: string;
+  image?: string; // Primary image (for backward compatibility)
+  images?: string[]; // Multiple hotel images for gallery
   pricePerNight?: number;
   rooms: Room[];
+  amenities?: string[]; // Hotel-level amenities
+  phone?: string;
+  email?: string;
+  website?: string;
 }
 
 export interface UserLogin {
@@ -92,6 +97,20 @@ export interface Message {
   content: string;
   timestamp: string;
   read: boolean;
+  isDeleted?: boolean;
+}
+
+export interface Conversation {
+  id: string;
+  participants: {
+    id: string | number;
+    name: string;
+    avatar?: string;
+    role: 'USER' | 'OWNER' | 'ADMIN';
+  }[];
+  lastMessage?: Message;
+  unreadCount: number;
+  hotelId?: number | string; // Optionally link to a hotel context
 }
 
 export interface LoyaltyPoints {

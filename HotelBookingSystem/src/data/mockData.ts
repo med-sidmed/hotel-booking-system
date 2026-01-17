@@ -279,6 +279,35 @@ export const mockNotifications: Notification[] = [
         read: false,
         date: "2026-01-26T10:00:00Z",
         actionUrl: "/hotels/2/review"
+    },
+    {
+        id: "NOT-OWNER-001",
+        userId: 1, // Owner
+        type: "BOOKING_CONFIRMED",
+        title: "Nouvelle Réservation",
+        message: "Une nouvelle réservation a été effectuée pour la Suite Deluxe par Jean Valjean.",
+        read: false,
+        date: new Date().toISOString(),
+        actionUrl: "/owner/bookings"
+    },
+    {
+        id: "NOT-OWNER-002",
+        userId: 1, // Owner
+        type: "MESSAGE",
+        title: "Nouveau Message",
+        message: "Le client Marc Lévy vous a envoyé une question sur les services de l'hôtel.",
+        read: false,
+        date: new Date(Date.now() - 1000 * 60 * 30).toISOString(), // 30 mins ago
+        actionUrl: "/owner/messages"
+    },
+    {
+        id: "NOT-OWNER-003",
+        userId: 1, // Owner
+        type: "PAYMENT_SUCCESS",
+        title: "Paiement Reçu",
+        message: "Un paiement de 1500 MRU a été reçu pour la réservation BK-789.",
+        read: true,
+        date: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(), // 2 hours ago
     }
 ];
 
@@ -316,6 +345,30 @@ export const mockMessages: Message[] = [
     }
 ];
 
+// Mock Conversations
+import type { Conversation } from "../types";
+
+export const mockConversations: Conversation[] = [
+    {
+        id: "CONV-101-1",
+        participants: [
+            { id: 101, name: "Sophie Martin", role: "USER", avatar: "https://i.pravatar.cc/150?img=1" },
+            { id: 1, name: "Hôtel Élégance Royal", role: "OWNER", avatar: "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=50&h=50&fit=crop" }
+        ],
+        unreadCount: 0,
+        lastMessage: mockMessages[1]
+    },
+    {
+        id: "CONV-102-1",
+        participants: [
+            { id: 102, name: "Pierre Dupont", role: "USER", avatar: "https://i.pravatar.cc/150?img=2" },
+            { id: 1, name: "Hôtel Élégance Royal", role: "OWNER", avatar: "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=50&h=50&fit=crop" }
+        ],
+        unreadCount: 1,
+        lastMessage: mockMessages[2]
+    }
+];
+
 // Mock Loyalty Points
 export const mockLoyaltyPoints: LoyaltyPoints[] = [
     {
@@ -349,6 +402,33 @@ export const mockLoyaltyPoints: LoyaltyPoints[] = [
                 date: "2026-01-20"
             }
         ]
+    }
+];
+
+// Mock Users for Authentication
+import type { UserLogin } from "../types";
+
+export const mockUsers: UserLogin[] = [
+    {
+        id: "admin-1",
+        name: "Administrateur",
+        email: "admin@luxotel.com",
+        password: "admin",
+        role: "ADMIN"
+    },
+    {
+        id: "owner-1",
+        name: "Propriétaire Hôtel",
+        email: "owner@hotel.com",
+        password: "owner",
+        role: "OWNER"
+    },
+    {
+        id: "client-1",
+        name: "Sophie Martin",
+        email: "client@user.com",
+        password: "user",
+        role: "USER"
     }
 ];
 

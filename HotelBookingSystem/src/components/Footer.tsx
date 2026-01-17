@@ -27,7 +27,8 @@ const Footer = () => {
           <div className="footer-brand">
             <h3 className="footer-logo">LUXOTEL</h3>
             <p className="footer-description">
-              Le compagnon de voyage de confiance de la Mauritanie depuis 2020. Nous connectons les voyageurs aux meilleurs hôtels et resorts de la Mauritanie, offrant des avis authentiques, des hébergements vérifiés et des expériences de réservation sans faille.
+              Luxotel est une application web moderne et luxueuse de réservation d'hôtels. Elle offre une expérience complète 
+              pour les utilisateurs.
             </p>
           </div>
           <div className="footer-links">

@@ -10,11 +10,16 @@ import {
   CreditCard,
   Tag,
   Globe,
-  LogOut
+  LogOut,
+  MessageSquare,
+  Shield
 } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
 
 export function AdminSidebar() {
   const location = useLocation();
+  const { user, isAuthenticated, logout } = useAuth();
+
   const isActive = (path: string) => location.pathname === path;
 
   const navSections = [
@@ -29,6 +34,7 @@ export function AdminSidebar() {
       items: [
         { name: 'Hôtels', path: '/admin/hotels', icon: Hotel },
         { name: 'Réservations', path: '/admin/bookings', icon: Calendar },
+        { name: 'Avis clients', path: '/admin/reviews', icon: MessageSquare },
         { name: 'Utilisateurs', path: '/admin/users', icon: Users },
       ]
     },
@@ -46,6 +52,7 @@ export function AdminSidebar() {
       items: [
         { name: 'Calendrier Global', path: '/admin/calendar', icon: Calendar },
         { name: 'Configuration', path: '/admin/config', icon: Globe },
+        { name: 'Journaux d\'Audit', path: '/admin/audit-logs', icon: Shield }, // Added
         { name: 'Paramètres', path: '/admin/settings', icon: Settings },
       ]
     }
@@ -90,7 +97,7 @@ export function AdminSidebar() {
       </nav>
 
       <div className="p-4 border-t border-[#5C4836]">
-        <button className="flex items-center w-full px-4 py-2 text-[#DDCDBF] hover:text-white transition-colors rounded-lg hover:bg-[#5C4836]">
+        <button onClick={logout} className="flex items-center w-full px-4 py-2 text-[#DDCDBF] hover:text-white transition-colors rounded-lg hover:bg-[#5C4836]">
           <LogOut size={20} className="mr-3" />
           <span className="text-sm">Déconnexion</span>
         </button>

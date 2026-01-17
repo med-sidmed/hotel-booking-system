@@ -1,16 +1,46 @@
 import { useState } from 'react';
- 
-import { useNavigate } from 'react-router-dom';
- 
+import { useNavigate, useLocation } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import { mockUsers } from '../data/mockData';
+import toast from 'react-hot-toast';
+
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { login } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Implement login logic
-    console.log('Login attempt', { email, password });
+    setIsSubmitting(true);
+
+    try {
+      // Find user in mock data
+      const user = mockUsers.find(u => u.email === email && u.password === password);
+      
+      if (user) {
+        await login(user.email, user.role);
+        toast.success(`Bienvenue, ${user.name} !`);
+        
+        // Redirect to intended page or dashboard based on role
+        const from = (location.state as any)?.from?.pathname;
+        if (from) {
+          navigate(from, { replace: true });
+        } else {
+          // Default redirection based on role
+          const defaultPath = user.role === 'ADMIN' ? '/admin' : user.role === 'OWNER' ? '/owner' : '/profile';
+          navigate(defaultPath, { replace: true });
+        }
+      } else {
+        toast.error('Email ou mot de passe incorrect');
+      }
+    } catch (error) {
+      toast.error('Une erreur est survenue lors de la connexion');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -88,9 +118,10 @@ export default function LoginPage() {
               <div>
                 <button
                   type="submit"
-                  className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-md text-sm font-medium text-white bg-[#6B5434] hover:bg-[#5B4424] hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#6B5434] transition-all"
+                  disabled={isSubmitting}
+                  className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-md text-sm font-medium text-white bg-[#6B5434] hover:bg-[#5B4424] hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#6B5434] transition-all disabled:opacity-50"
                 >
-                  Se connecter
+                  {isSubmitting ? 'Connexion en cours...' : 'Se connecter'}
                 </button>
               </div>
             </form>

@@ -1,41 +1,51 @@
-# Hotel Booking System (Frontend)
+# Luxotel - Hotel Booking System (Frontend)
 
 ## 📌 Présentation
-Une application web moderne de réservation d'hôtels développée avec **React**, **TypeScript**, **Vite** et **Tailwind CSS**. Ce projet offre une interface utilisateur élégante et responsive, incluant la recherche d'hôtels, la visualisation des détails, la réservation (simulation), la gestion des favoris et des avis utilisateurs.
+Luxotel est une application web moderne et luxueuse de réservation d'hôtels. Elle offre une expérience complète pour trois types d'utilisateurs : les **Clients**, les **Propriétaires d'hôtels** (Owners) et les **Administrateurs**.
+
+Le projet met l'accent sur une esthétique premium, une navigation fluide et un système robuste de gestion des accès (RBAC).
 
 ## 🚀 Technologies Utilisées
 - **Core**: React 18, TypeScript, Vite
-- **Styling**: Tailwind CSS, Shadcn/ui (Radix UI)
-- **Routing**: React Router DOM (v6)
-- **État & Gestion**: Context API, LocalStorage
-- **Icônes**: Heroicons (via SVG)
+- **Styling**: Tailwind CSS, Shadcn/ui, Lucide Icons
+- **Routing**: React Router DOM (v6) avec Routes Protégées
+- **État & Gestion**: 
+  - **AuthContext**: Gestion des sessions et rôles (RBAC).
+  - **NotificationContext**: Système d'alertes global et temps réel (simulation).
+  - **FavoritesContext**: Persistence des coups de cœur (LocalStorage).
+  - **ReviewsContext**: Gestion des avis utilisateurs.
 
-## 📂 Structure du Projet
-```bash
-src/
-├── components/         # Composants réutilisables
-│   ├── booking/        # Modal et formulaire de réservation/paiement
-│   ├── common/         # NavBar, Footer, etc.
-│   ├── reviews/        # Liste et formulaire d'avis
-│   ├── ui/             # Composants Shadcn (Dialog, Button, etc.)
-│   └── HotelCard.tsx   # Carte d'hôtel avec favoris
-├── context/            # Gestion d'état global
-│   ├── FavoritesContext.tsx # Gestion des favoris
-│   └── ReviewsContext.tsx   # Gestion des avis
-├── data/               # Données factices (mockData.ts)
-├── pages/              # Pages principales (Home, Details, Profile, etc.)
-├── types/              # Définitions TypeScript partagées
-└── App.tsx             # Configuration des routes et Providers
-```
+## 📂 Espaces Utilisateurs
 
-## ✨ Fonctionnalités Principales
-1.  **Recherche & Filtrage** : Recherche d'hôtels par destination avec filtres dynamiques.
-2.  **Détails de l'Hôtel** : Galerie d'images, liste des chambres, équipements et avis.
-3.  **Réservation Complète** : Flux complet incluant sélection de dates, invités et simulation de paiement sécurisé.
-4.  **Favoris (Wishlist)** : Ajoutez vos hôtels préférés à votre liste de souhaits (persistant via LocalStorage).
-5.  **Avis Clients** : Consultez et ajoutez des avis sur les hôtels (persistant via LocalStorage).
-6.  **Authentification** : Pages de Connexion et Inscription (Interface).
-7.  **Profil Utilisateur** : Historique des réservations, gestion du profil et accès aux favoris.
+### 1. Espace Public
+- **Navigation**: Recherche d'hôtels, filtres par destination/prix.
+- **Détails**: Galerie d'images, équipements, avis et chambres disponibles.
+- **Réservation**: Flux de réservation sécurisé (nécessite une connexion).
+
+### 2. Dashboard Client
+- **Mes Réservations**: Suivi des séjours passés et à venir.
+- **Mes Favoris**: Liste personnalisée des hôtels sauvegardés.
+- **Paramètres**: Gestion du profil, sécurité (mot de passe) et préférences de notification.
+
+### 3. Dashboard Propriétaire (Owner)
+- **Gestion de l'Hôtel**: Mise à jour des informations, équipements et photos.
+- **Gestion des Chambres**: CRUD complet des chambres (types, prix, disponibilité).
+- **Réservations**: Confirmation ou annulation des demandes clients avec notifications automatiques.
+- **Finance**: Aperçu des revenus et statistiques simples.
+
+### 4. Dashboard Administrateur (Admin)
+- **Analytics**: Graphiques de performance globale du système.
+- **Utilisateurs**: Gestion des rôles et comptes.
+- **Système**: Configuration globale et promotions.
+
+## 🔑 Comptes de Test
+Utilisez ces identifiants pour explorer les différents dashboards :
+
+| Rôle | Email | Mot de passe |
+| :--- | :--- | :--- |
+| **Administrateur** | `admin@luxotel.com` | `admin` |
+| **Propriétaire** | `owner@hotel.com` | `owner` |
+| **Client** | `client@user.com` | `user` |
 
 ## 🛠️ Installation et Démarrage
 
@@ -59,10 +69,10 @@ npm run dev
 ```
 L'application sera accessible sur `http://localhost:5173`.
 
-## 📝 Notes pour les Développeurs
-- **Données** : Les données sont simulées dans `src/data/mockData.ts`. Il n'y a pas de backend réel connecté.
-- **Persistence** : Les favoris et avis sont stockés dans le `localStorage` du navigateur pour persister entre les rafraîchissements.
-- **Ajout d'icônes** : Le projet utilise des SVGs inline ou Heroicons.
+## 📝 Notes Techniques
+- **Données**: Entièrement simulées via `src/data/mockData.ts`.
+- **Persistence**: Les favoris, avis et sessions utilisateur sont conservés via le `LocalStorage`.
+- **RBAC**: Les routes `/admin`, `/owner` et `/profile` sont protégées. Si un utilisateur non autorisé tente d'y accéder, il est redirigé vers sa page d'accueil respective.
 
 ---
-Développé dans le cadre d'un mini-projet académique.
+Développé dans le cadre d'un mini-projet académique sur les systèmes de réservation.

@@ -1,8 +1,14 @@
 import { Bell, Moon, Search, Sun, User } from 'lucide-react';
 import { useState } from 'react';
+import { useNotifications } from '../../context/NotificationContext';
+import { useTheme } from '../../context/ThemeContext';
+import { NotificationDropdown } from '../../components/common/NotificationDropdown';
 
 export function OwnerHeader() {
-  const [isDarkMode, setIsDarkMode] = useState(false);
+  const { theme, setTheme } = useTheme();
+  const [showNotifications, setShowNotifications] = useState(false);
+  const { unreadCount } = useNotifications();
+  const ownerId = 1; // Current owner ID
 
   return (
     <header className="bg-white dark:bg-[#1A1A1A] h-16 shadow-sm border-b border-gray-200 dark:border-gray-800 flex items-center justify-between px-6 transition-colors duration-300">
@@ -19,16 +25,32 @@ export function OwnerHeader() {
 
       <div className="flex items-center space-x-4">
         <button 
-          onClick={() => setIsDarkMode(!isDarkMode)}
+          onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
           className="p-2 text-gray-400 hover:text-[#C6A87C] transition-colors rounded-full hover:bg-gray-100 dark:hover:bg-gray-800"
+          title={`Mode ${theme === 'dark' ? 'Clair' : 'Sombre'}`}
         >
-           {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
+           {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
         </button>
 
-        <button className="p-2 text-gray-400 hover:text-[#C6A87C] transition-colors rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 relative">
-           <Bell size={20} />
-           <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border-2 border-white dark:border-[#1A1A1A]"></span>
-        </button>
+        <div className="relative">
+          <button 
+            onClick={() => setShowNotifications(!showNotifications)}
+            className="p-2 text-gray-400 hover:text-[#C6A87C] transition-colors rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 relative"
+          >
+            <Bell size={20} />
+            {unreadCount > 0 && (
+              <span className="absolute top-1 right-1 min-w-[18px] h-[18px] bg-red-500 rounded-full border-2 border-white dark:border-[#1A1A1A] flex items-center justify-center">
+                <span className="text-[10px] font-bold text-white">{unreadCount > 9 ? '9+' : unreadCount}</span>
+              </span>
+            )}
+          </button>
+          
+          <NotificationDropdown 
+            isOpen={showNotifications} 
+            onClose={() => setShowNotifications(false)} 
+            userId={ownerId}
+          />
+        </div>
         
         <div className="flex items-center space-x-3 pl-4 border-l border-gray-200 dark:border-gray-700">
             <div className="text-right hidden sm:block">

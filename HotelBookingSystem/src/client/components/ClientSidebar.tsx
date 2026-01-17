@@ -7,22 +7,30 @@ import {
   CreditCard,
   Gift,
   LogOut,
-  Star
+  Star,
+  Home,
+  MessageSquare
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
+import { useAuth } from '@/context/AuthContext';
+
 
 export function ClientSidebar() {
   const location = useLocation();
+  const { user, isAuthenticated, logout } = useAuth();
+
   const isActive = (path: string) => location.pathname === path;
 
   const navItems = [
     { name: 'Tableau de Bord', path: '/profile', icon: LayoutDashboard },
     { name: 'Mes Réservations', path: '/profile/bookings', icon: Calendar },
+    { name: 'Messages', path: '/profile/messages', icon: MessageSquare }, // Added
     { name: 'Mes Favoris', path: '/profile/favorites', icon: Heart },
     { name: 'Mes Avis', path: '/profile/reviews', icon: Star },
     { name: 'Paiements', path: '/profile/payments', icon: CreditCard },
     { name: 'Fidélité', path: '/profile/loyalty', icon: Gift },
     { name: 'Paramètres', path: '/profile/settings', icon: User },
+    { name: 'Accueil', path: '/', icon: Home },
   ];
 
   return (
@@ -62,11 +70,11 @@ export function ClientSidebar() {
       </nav>
 
       <div className="p-4 border-t border-gray-200">
-        <button className="flex items-center w-full px-3 py-2 text-gray-600 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors">
+        <button onClick={logout} className="flex items-center w-full px-3 py-2 text-gray-600 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors">
           <LogOut size={20} />
           <span className="ml-3 font-medium">Déconnexion</span>
         </button>
-      </div>
+      </div>  
     </div>
   );
 }

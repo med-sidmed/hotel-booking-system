@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import toast from 'react-hot-toast';
 
 export default function RegisterPage() {
   const [formData, setFormData] = useState({
@@ -9,7 +11,9 @@ export default function RegisterPage() {
     confirmPassword: '',
     phone: '',
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
+  const { login } = useAuth();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
@@ -18,10 +22,27 @@ export default function RegisterPage() {
     });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Implement registration logic
-    console.log('Register attempt', formData);
+    
+    if (formData.password !== formData.confirmPassword) {
+      toast.error('Les mots de passe ne correspondent pas');
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      // Simulate registration
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Auto login after registration
+      await login(formData.email, 'USER');
+      toast.success('Compte créé avec succès !');
+      navigate('/profile');
+    } catch (error) {
+      toast.error("Erreur lors de l'inscription");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -130,9 +151,10 @@ export default function RegisterPage() {
                 <div>
                   <button
                     type="submit"
-                    className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-md text-sm font-medium text-white bg-[#6B5434] hover:bg-[#5B4424] hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#6B5434] transition-all"
+                    disabled={isSubmitting}
+                    className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-md text-sm font-medium text-white bg-[#6B5434] hover:bg-[#5B4424] hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#6B5434] transition-all disabled:opacity-50"
                   >
-                    S'inscrire
+                    {isSubmitting ? 'Inscription en cours...' : "S'inscrire"}
                   </button>
                 </div>
               </form>

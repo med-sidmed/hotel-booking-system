@@ -4,19 +4,15 @@ import type { Booking, UserLogin } from '../types';
 import { useFavorites } from '../context/FavoritesContext';
 import { hotels } from '../data/mockData';
 import { HotelCard } from '../components/HotelCard';
+import { useAuth } from '../context/AuthContext';
 
 export default function UserProfilePage() {
   const { favorites } = useFavorites();
   const [activeTab, setActiveTab] = useState<'bookings' | 'favorites'>('bookings');
 
-  // Mock data
-  const user: UserLogin = {
-    id: 1,
-    name: "John Doe",
-    email: "john@example.com",
-    password: "password",
-    role: "USER"
-  };
+  const { user, isAuthenticated, logout } = useAuth();
+
+
 
   const bookings: Booking[] = [
     {
@@ -51,11 +47,11 @@ export default function UserProfilePage() {
             <div className="bg-white rounded-lg shadow p-6">
               <div className="flex items-center space-x-4 mb-6">
                 <div className="h-16 w-16 bg-gray-200 rounded-full flex items-center justify-center text-2xl font-bold text-gray-500">
-                  {user.name.charAt(0)}
+                  {user?.name.charAt(0)}
                 </div>
                 <div>
-                  <h2 className="text-xl font-bold">{user.name}</h2>
-                  <p className="text-gray-500">{user.email}</p>
+                  <h2 className="text-xl font-bold">{user?.name}</h2>
+                  <p className="text-gray-500">{user?.email}</p>
                 </div>
               </div>
               <div className="space-y-2">
@@ -78,7 +74,7 @@ export default function UserProfilePage() {
                  <button className="w-full text-left px-4 py-2 rounded hover:bg-gray-50 text-gray-700 font-medium">
                    Changer le mot de passe
                  </button>
-                 <button className="w-full text-left px-4 py-2 rounded hover:bg-gray-50 text-red-600 font-medium">
+                 <button onClick={logout} className="w-full text-left px-4 py-2 rounded hover:bg-gray-50 text-red-600 font-medium">
                    Se déconnecter
                  </button>
               </div>

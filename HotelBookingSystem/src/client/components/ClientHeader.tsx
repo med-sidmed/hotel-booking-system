@@ -1,10 +1,14 @@
-import { Bell, Search, User } from 'lucide-react';
+import { Bell, Search, User, Sun, Moon } from 'lucide-react';
 import { useNotifications } from '../../context/NotificationContext';
+import { useTheme } from '../../context/ThemeContext';
 import { useState } from 'react';
+import { NotificationDropdown } from '../../components/common/NotificationDropdown';
 
 export function ClientHeader() {
-  const { unreadCount, notifications, markAsRead } = useNotifications();
+  const { unreadCount } = useNotifications();
+  const { theme, setTheme } = useTheme();
   const [showNotifications, setShowNotifications] = useState(false);
+  const clientId = 101; // Current client ID (from mock data)
 
   return (
     <header className="bg-white h-16 shadow-sm border-b border-gray-200 flex items-center justify-between px-6">
@@ -20,6 +24,14 @@ export function ClientHeader() {
       </div>
 
       <div className="flex items-center space-x-4">
+        <button
+          onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+          className="p-2 text-gray-400 hover:text-[#C6A87C] transition-colors rounded-full hover:bg-gray-100 dark:hover:bg-gray-800"
+          title={`Mode ${theme === 'dark' ? 'Clair' : 'Sombre'}`}
+        >
+          {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
+        </button>
+
         <div className="relative">
           <button 
             onClick={() => setShowNotifications(!showNotifications)}
@@ -31,27 +43,11 @@ export function ClientHeader() {
             )}
           </button>
 
-          {showNotifications && (
-            <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg border border-gray-200 z-50 max-h-96 overflow-y-auto">
-              <div className="p-3 border-b border-gray-200 flex justify-between items-center">
-                <h3 className="font-semibold text-gray-800">Notifications</h3>
-                <span className="text-xs bg-[#C6A87C] text-white px-2 py-0.5 rounded-full">{unreadCount}</span>
-              </div>
-              <div className="divide-y divide-gray-100">
-                {notifications.slice(0, 5).map((notif) => (
-                  <div
-                    key={notif.id}
-                    onClick={() => markAsRead(notif.id)}
-                    className={`p-3 cursor-pointer hover:bg-gray-50 ${!notif.read ? 'bg-blue-50' : ''}`}
-                  >
-                    <h4 className="text-sm font-medium text-gray-900">{notif.title}</h4>
-                    <p className="text-xs text-gray-600 mt-1">{notif.message}</p>
-                    <p className="text-xs text-gray-400 mt-1">{new Date(notif.date).toLocaleDateString('fr-FR')}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
+          <NotificationDropdown 
+            isOpen={showNotifications} 
+            onClose={() => setShowNotifications(false)} 
+            userId={clientId}
+          />
         </div>
         
         <div className="flex items-center space-x-3 pl-4 border-l border-gray-200">

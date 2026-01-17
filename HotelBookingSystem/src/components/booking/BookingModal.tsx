@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
 import {
   Dialog,
   DialogContent,
@@ -18,6 +20,9 @@ interface BookingModalProps {
 export function BookingModal({ room, hotelName }: BookingModalProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [step, setStep] = useState<1 | 2 | 3>(1); // 1: Details, 2: Payment, 3: Confirmation
+  const { isAuthenticated } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
   
   const [bookingDetails, setBookingDetails] = useState({
     checkIn: '',
@@ -58,6 +63,12 @@ export function BookingModal({ room, hotelName }: BookingModalProps) {
         <button 
           className="bg-[#6B5434] hover:bg-[#5B4424] text-white px-8 py-3 rounded-md font-bold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           disabled={!room.available}
+          onClick={(e) => {
+            if (!isAuthenticated) {
+              e.preventDefault();
+              navigate('/login', { state: { from: location } });
+            }
+          }}
         >
           Réserver cette chambre
         </button>

@@ -4,25 +4,32 @@ import {
   Hotel, 
   CalendarDays, 
   CreditCard, 
-  MessageSquare, 
   Settings, 
   LogOut,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Info,
+  Calendar,
+  MessageSquare
 } from 'lucide-react';
 import { useState } from 'react';
 import { cn } from '../../lib/utils';
+import { useAuth } from '../../context/AuthContext';
 
 export function OwnerSidebar() {
   const location = useLocation();
   const [collapsed, setCollapsed] = useState(false);
+    const { user, isAuthenticated, logout } = useAuth();
 
   const isActive = (path: string) => location.pathname === path;
 
   const navItems = [
     { name: 'Tableau de bord', path: '/owner', icon: LayoutDashboard },
+    { name: 'Informations Hôtel', path: '/owner/hotel-info', icon: Info },
     { name: 'Mes Chambres', path: '/owner/rooms', icon: Hotel },
     { name: 'Réservations', path: '/owner/bookings', icon: CalendarDays },
+    { name: 'Messages', path: '/owner/messages', icon: MessageSquare }, // Added
+    { name: 'Calendrier', path: '/owner/calendar', icon: Calendar },
     { name: 'Finances', path: '/owner/finance', icon: CreditCard },
     { name: 'Paramètres', path: '/owner/settings', icon: Settings },
   ];
@@ -76,7 +83,7 @@ export function OwnerSidebar() {
       </nav>
 
        <div className="p-4 border-t border-gray-800">
-        <button className={cn(
+        <button onClick={logout} className={cn(
           "flex items-center w-full px-3 py-2 text-gray-400 hover:text-red-400 hover:bg-gray-800 rounded-lg transition-colors",
           collapsed ? "justify-center" : ""
         )}>
