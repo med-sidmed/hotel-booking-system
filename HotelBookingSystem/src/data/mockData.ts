@@ -150,3 +150,251 @@ export const mockBookings: any[] = [
         date: "2026-01-25"
     }
 ];
+
+// Mock Reviews
+import type { Review, Transaction, Notification, Message, LoyaltyPoints, Promotion } from "../types";
+
+export const mockReviews: Review[] = [
+    {
+        id: "REV-001",
+        hotelId: 1,
+        userId: 101,
+        userName: "Sophie Martin",
+        userAvatar: "https://i.pravatar.cc/150?img=1",
+        rating: 5,
+        comment: "Séjour exceptionnel ! Personnel très accueillant, chambres luxueuses et vue magnifique. Je recommande vivement.",
+        photos: [
+            "https://images.unsplash.com/photo-1551882547-ff40c63fe5fa",
+            "https://images.unsplash.com/photo-1590490360182-c33d57733427"
+        ],
+        date: "2026-01-10",
+        ownerResponse: {
+            text: "Merci beaucoup pour votre avis ! Nous sommes ravis que vous ayez apprécié votre séjour.",
+            date: "2026-01-11"
+        },
+        verified: true
+    },
+    {
+        id: "REV-002",
+        hotelId: 1,
+        userId: 102,
+        userName: "Pierre Dupont",
+        userAvatar: "https://i.pravatar.cc/150?img=2",
+        rating: 4,
+        comment: "Très bon hôtel, bien situé. Seul bémol : le wifi était un peu lent.",
+        photos: [],
+        date: "2026-01-08",
+        verified: true
+    },
+    {
+        id: "REV-003",
+        hotelId: 2,
+        userId: 104,
+        userName: "Marie Curie",
+        userAvatar: "https://i.pravatar.cc/150?img=3",
+        rating: 5,
+        comment: "Villa en bord de mer absolument parfaite ! Piscine privée magnifique.",
+        photos: ["https://images.unsplash.com/photo-1582719478250-c89cae4dc85b"],
+        date: "2026-01-05",
+        verified: true
+    }
+];
+
+// Mock Transactions
+export const mockTransactions: Transaction[] = [
+    {
+        id: "TRX-001",
+        userId: 101,
+        bookingId: "BK-001",
+        amount: 1750,
+        currency: "MRU",
+        method: "CARD",
+        status: "COMPLETED",
+        type: "FULL_PAYMENT",
+        date: "2026-01-15",
+        invoiceUrl: "/invoices/TRX-001.pdf"
+    },
+    {
+        id: "TRX-002",
+        userId: 102,
+        bookingId: "BK-002",
+        amount: 216,
+        currency: "MRU",
+        method: "CARD",
+        status: "COMPLETED",
+        type: "DEPOSIT",
+        date: "2026-01-20"
+    },
+    {
+        id: "TRX-003",
+        userId: 104,
+        bookingId: "BK-004",
+        amount: 2700,
+        currency: "MRU",
+        method: "BANK_TRANSFER",
+        status: "COMPLETED",
+        type: "FULL_PAYMENT",
+        date: "2026-01-25",
+        invoiceUrl: "/invoices/TRX-003.pdf"
+    }
+];
+
+// Mock Notifications
+export const mockNotifications: Notification[] = [
+    {
+        id: "NOT-001",
+        userId: 101,
+        type: "BOOKING_CONFIRMED",
+        title: "Réservation Confirmée",
+        message: "Votre réservation pour l'Hôtel Élégance Royal a été confirmée !",
+        read: false,
+        date: "2026-01-15T14:30:00Z",
+        actionUrl: "/my-bookings"
+    },
+    {
+        id: "NOT-002",
+        userId: 101,
+        type: "PAYMENT_SUCCESS",
+        title: "Paiement Réussi",
+        message: "Votre paiement de 1750 MRU a été traité avec succès.",
+        read: false,
+        date: "2026-01-15T14:32:00Z"
+    },
+    {
+        id: "NOT-003",
+        userId: 102,
+        type: "PROMOTION",
+        title: "Offre Spéciale -20%",
+        message: "Profitez de -20% sur votre prochaine réservation avec le code WINTER2026",
+        read: true,
+        date: "2026-01-10T09:00:00Z",
+        actionUrl: "/promotions"
+    },
+    {
+        id: "NOT-004",
+        userId: 104,
+        type: "REVIEW_REQUEST",
+        title: "Partagez votre expérience",
+        message: "Comment s'est passé votre séjour à Station Balnéaire Palmier ?",
+        read: false,
+        date: "2026-01-26T10:00:00Z",
+        actionUrl: "/hotels/2/review"
+    }
+];
+
+// Mock Messages
+export const mockMessages: Message[] = [
+    {
+        id: "MSG-001",
+        senderId: 101,
+        senderName: "Sophie Martin",
+        receiverId: 1,
+        conversationId: "CONV-101-1",
+        content: "Bonjour, est-il possible d'avoir une chambre avec vue sur mer ?",
+        timestamp: "2026-01-14T16:20:00Z",
+        read: true
+    },
+    {
+        id: "MSG-002",
+        senderId: 1,
+        senderName: "Hôtel Élégance Royal",
+        receiverId: 101,
+        conversationId: "CONV-101-1",
+        content: "Bonjour ! Bien sûr, nous avons des suites avec vue mer disponibles. Je vous contacte pour les détails.",
+        timestamp: "2026-01-14T16:45:00Z",
+        read: true
+    },
+    {
+        id: "MSG-003",
+        senderId: 102,
+        senderName: "Pierre Dupont",
+        receiverId: 1,
+        conversationId: "CONV-102-1",
+        content: "Le petit déjeuner est-il inclus dans le tarif ?",
+        timestamp: "2026-01-20T11:00:00Z",
+        read: false
+    }
+];
+
+// Mock Loyalty Points
+export const mockLoyaltyPoints: LoyaltyPoints[] = [
+    {
+        userId: 101,
+        totalPoints: 1750,
+        tier: "GOLD",
+        transactionHistory: [
+            {
+                id: "LP-001",
+                points: 1750,
+                reason: "Réservation BK-001 complétée",
+                date: "2026-01-15"
+            },
+            {
+                id: "LP-002",
+                points: 500,
+                reason: "Bonus inscription",
+                date: "2025-12-01"
+            }
+        ]
+    },
+    {
+        userId: 102,
+        totalPoints: 720,
+        tier: "SILVER",
+        transactionHistory: [
+            {
+                id: "LP-003",
+                points: 720,
+                reason: "Réservation BK-002 (acompte)",
+                date: "2026-01-20"
+            }
+        ]
+    }
+];
+
+// Mock Promotions
+export const mockPromotions: Promotion[] = [
+    {
+        id: "PROMO-001",
+        code: "WINTER2026",
+        title: "Offre Hiver -20%",
+        description: "Profitez de -20% sur toutes les réservations en février",
+        discountType: "PERCENTAGE",
+        discountValue: 20,
+        validFrom: "2026-02-01",
+        validUntil: "2026-02-28",
+        minPurchase: 500,
+        usageLimit: 100,
+        usedCount: 23,
+        active: true
+    },
+    {
+        id: "PROMO-002",
+        code: "WELCOME50",
+        title: "Bienvenue -50 MRU",
+        description: "Réduction de 50 MRU pour votre première réservation",
+        discountType: "FIXED",
+        discountValue: 50,
+        validFrom: "2026-01-01",
+        validUntil: "2026-12-31",
+        minPurchase: 200,
+        usageLimit: 500,
+        usedCount: 142,
+        active: true
+    },
+    {
+        id: "PROMO-003",
+        code: "SUMMER2026",
+        title: "Été Luxueux -15%",
+        description: "Réduction de 15% sur les suites premium en été",
+        discountType: "PERCENTAGE",
+        discountValue: 15,
+        validFrom: "2026-06-01",
+        validUntil: "2026-08-31",
+        maxDiscount: 300,
+        usageLimit: 200,
+        usedCount: 0,
+        active: true
+    }
+];
+
