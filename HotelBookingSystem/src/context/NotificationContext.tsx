@@ -1,11 +1,12 @@
-import { createContext, useContext, useState, type ReactNode } from 'react';
+import { createContext, useContext, useState, useMemo, type ReactNode } from 'react';
 import type { Notification } from '../types';
 import { mockNotifications } from '../data/mockData';
+import { useAuth } from './AuthContext';
 import toast from 'react-hot-toast';
 
 interface NotificationContextType {
   notifications: Notification[];
-  addNotification: (notification: Omit<Notification, 'id' | 'date' | 'read'>) => void;
+  addNotification: (notification: Omit<Notification, 'id' | 'date' | 'read' | 'userId'> & { userId?: string | number }) => void;
   markAsRead: (id: string) => void;
   markAllAsRead: () => void;
   unreadCount: number;
@@ -15,30 +16,45 @@ interface NotificationContextType {
 const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
 
 export function NotificationProvider({ children }: { children: ReactNode }) {
-  const [notifications, setNotifications] = useState<Notification[]>(mockNotifications);
+  const { user, isAuthenticated } = useAuth();
+  const [allNotifications, setAllNotifications] = useState<Notification[]>(mockNotifications);
 
-  const addNotification = (notif: Omit<Notification, 'id' | 'date' | 'read'>) => {
+  // Filter notifications based on the current user
+  const userNotifications = useMemo(() => {
+    if (!isAuthenticated || !user) return [];
+    return allNotifications.filter(n => n.userId === user.id);
+  }, [allNotifications, user, isAuthenticated]);
+
+  const addNotification = (notif: Omit<Notification, 'id' | 'date' | 'read' | 'userId'> & { userId?: string | number }) => {
     const newNotif: Notification = {
       ...notif,
+      userId: notif.userId || user?.id || 'system',
       id: `NOT-${Date.now()}`,
       date: new Date().toISOString(),
       read: false
     };
-    setNotifications(prev => [newNotif, ...prev]);
-    showToast(notif.title, 'info');
+    setAllNotifications(prev => [newNotif, ...prev]);
+    
+    // Only show toast if it's for the current user
+    if (!notif.userId || notif.userId === user?.id) {
+      showToast(notif.title, 'info');
+    }
   };
 
   const markAsRead = (id: string) => {
-    setNotifications(prev =>
+    setAllNotifications(prev =>
       prev.map(n => (n.id === id ? { ...n, read: true } : n))
     );
   };
 
   const markAllAsRead = () => {
-    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+    if (!user) return;
+    setAllNotifications(prev => 
+      prev.map(n => n.userId === user.id ? { ...n, read: true } : n)
+    );
   };
 
-  const unreadCount = notifications.filter(n => !n.read).length;
+  const unreadCount = userNotifications.filter(n => !n.read).length;
 
   const showToast = (message: string, type: 'success' | 'error' | 'info' = 'info') => {
     switch (type) {
@@ -55,7 +71,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
 
   return (
     <NotificationContext.Provider value={{
-      notifications,
+      notifications: userNotifications,
       addNotification,
       markAsRead,
       markAllAsRead,

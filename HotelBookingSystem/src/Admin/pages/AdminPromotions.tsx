@@ -1,20 +1,19 @@
 import { useState } from 'react';
-import { mockPromotions } from '../../data/mockData';
 import { Plus, Edit, Trash2, Copy, Calendar, TrendingUp } from 'lucide-react';
-import type { Promotion } from '../../types';
 import { ConfirmDialog, FormDialog } from '../../components/Dialog';
 import toast from 'react-hot-toast';
+import { usePromoCodes } from '../../context/PromoCodeContext';
 
 export default function AdminPromotions() {
-  const [promotions, setPromotions] = useState<Promotion[]>(mockPromotions);
+  const { promoCodes, addPromoCode, deletePromoCode, togglePromoCode } = usePromoCodes();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showFormDialog, setShowFormDialog] = useState(false);
-  const [selectedPromo, setSelectedPromo] = useState<Promotion | null>(null);
+  const [selectedPromo, setSelectedPromo] = useState<any | null>(null);
   const [formData, setFormData] = useState({
     code: '',
     title: '',
     description: '',
-    discountType: 'PERCENTAGE' as 'PERCENTAGE' | 'FIXED',
+    discountType: 'percentage' as 'percentage' | 'fixed',
     discountValue: 0,
     validFrom: '',
     validUntil: '',
@@ -23,32 +22,33 @@ export default function AdminPromotions() {
     usageLimit: 0
   });
 
-  const handleDelete = (promo: Promotion) => {
+  const handleDelete = (promo: any) => {
     setSelectedPromo(promo);
     setShowDeleteDialog(true);
   };
 
   const confirmDelete = () => {
     if (selectedPromo) {
-      setPromotions(promotions.filter(p => p.id !== selectedPromo.id));
+      deletePromoCode(selectedPromo.id);
       toast.success(`Promotion "${selectedPromo.code}" supprimée avec succès`);
+      setShowDeleteDialog(false);
       setSelectedPromo(null);
     }
   };
 
-  const handleEdit = (promo: Promotion) => {
+  const handleEdit = (promo: any) => {
     setSelectedPromo(promo);
     setFormData({
       code: promo.code,
-      title: promo.title,
-      description: promo.description,
+      title: promo.title || '',
+      description: promo.description || '',
       discountType: promo.discountType,
       discountValue: promo.discountValue,
-      validFrom: promo.validFrom,
-      validUntil: promo.validUntil,
-      minPurchase: promo.minPurchase || 0,
-      maxDiscount: promo.maxDiscount || 0,
-      usageLimit: promo.usageLimit || 0
+      validFrom: promo.validFrom || '',
+      validUntil: promo.expiryDate,
+      minPurchase: promo.minBookingValue || 0,
+      maxDiscount: 0,
+      usageLimit: promo.maxUses || 0
     });
     setShowFormDialog(true);
   };
@@ -59,7 +59,7 @@ export default function AdminPromotions() {
       code: '',
       title: '',
       description: '',
-      discountType: 'PERCENTAGE',
+      discountType: 'percentage',
       discountValue: 0,
       validFrom: '',
       validUntil: '',
@@ -74,33 +74,30 @@ export default function AdminPromotions() {
     e.preventDefault();
     
     if (selectedPromo) {
-      // Update
-      setPromotions(promotions.map(p => 
-        p.id === selectedPromo.id 
-          ? { ...p, ...formData }
-          : p
-      ));
-      toast.success(`Promotion "${formData.code}" mise à jour`);
-    } else {
-      // Create
-      const newPromo: Promotion = {
-        id: `PROMO-${Date.now()}`,
-        ...formData,
-        usedCount: 0,
-        active: true
-      };
-      setPromotions([...promotions, newPromo]);
-      toast.success(`Promotion "${formData.code}" créée avec succès`);
+      // In a real app we'd have an update method in context
+      // For now, let's simulate by deleting and adding
+      deletePromoCode(selectedPromo.id);
     }
+
+    addPromoCode({
+      code: formData.code,
+      discountType: formData.discountType,
+      discountValue: formData.discountValue,
+      minBookingValue: formData.minPurchase,
+      expiryDate: formData.validUntil,
+      maxUses: formData.usageLimit,
+      // Supporting extra UI fields that aren't in PromoCode interface yet
+      ...({ title: formData.title, description: formData.description, validFrom: formData.validFrom } as any)
+    });
+
+    toast.success(`Promotion "${formData.code}" ${selectedPromo ? 'mise à jour' : 'créée avec succès'}`);
     setShowFormDialog(false);
   };
 
   const handleToggleActive = (id: string) => {
-    const promo = promotions.find(p => p.id === id);
-    setPromotions(promotions.map(p => 
-      p.id === id ? { ...p, active: !p.active } : p
-    ));
-    toast.success(promo?.active ? `Promotion désactivée` : `Promotion activée`);
+    togglePromoCode(id);
+    const promo = promoCodes.find(p => p.id === id);
+    toast.success(promo?.isActive ? `Promotion désactivée` : `Promotion activée`);
   };
 
   const copyCode = (code: string) => {
@@ -130,7 +127,7 @@ export default function AdminPromotions() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-500 mb-1">Promotions Actives</p>
-              <p className="text-2xl font-bold text-green-600">{promotions.filter(p => p.active).length}</p>
+              <p className="text-2xl font-bold text-green-600">{promoCodes.filter(p => p.isActive).length}</p>
             </div>
             <div className="p-3 bg-green-50 rounded-lg">
               <TrendingUp className="text-green-600" size={24} />
@@ -142,7 +139,7 @@ export default function AdminPromotions() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-500 mb-1">Total Utilisations</p>
-              <p className="text-2xl font-bold text-blue-600">{promotions.reduce((acc, p) => acc + p.usedCount, 0)}</p>
+              <p className="text-2xl font-bold text-blue-600">{promoCodes.reduce((acc, p) => acc + p.usedCount, 0)}</p>
             </div>
             <div className="p-3 bg-blue-50 rounded-lg">
               <Calendar className="text-blue-600" size={24} />
@@ -153,11 +150,11 @@ export default function AdminPromotions() {
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-500 mb-1">Taux Utilisation Moyen</p>
+              <p className="text-sm text-gray-500 mb-1">Top Promotion</p>
               <p className="text-2xl font-bold text-purple-600">
-                {promotions.length > 0 
-                  ? ((promotions.reduce((acc, p) => acc + (p.usageLimit ? (p.usedCount / p.usageLimit) * 100 : 0), 0) / promotions.length).toFixed(0))
-                  : 0}%
+                {promoCodes.length > 0 
+                  ? promoCodes.reduce((prev, current) => (prev.usedCount > current.usedCount) ? prev : current).code
+                  : 'N/A'}
               </p>
             </div>
             <div className="p-3 bg-purple-50 rounded-lg">
@@ -169,32 +166,30 @@ export default function AdminPromotions() {
 
       {/* Promotions List */}
       <div className="grid grid-cols-1 gap-4">
-        {promotions.map((promo) => {
-          const usagePercent = promo.usageLimit ? (promo.usedCount / promo.usageLimit) * 100 : 0;
-          const isExpired = new Date(promo.validUntil) < new Date();
+        {promoCodes.map((promo: any) => {
+          const usagePercent = promo.maxUses ? (promo.usedCount / promo.maxUses) * 100 : 0;
+          const isExpired = new Date(promo.expiryDate) < new Date();
 
           return (
-            <div key={promo.id} className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition
-
--shadow">
+            <div key={promo.id} className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow">
               <div className="flex justify-between items-start">
                 <div className="flex-1">
                   <div className="flex items-center gap-3 mb-2">
-                    <h3 className="text-lg font-bold text-gray-800">{promo.title}</h3>
+                    <h3 className="text-lg font-bold text-gray-800">{promo.title || 'Promotion'}</h3>
                     <div className="flex gap-2">
-                      {promo.active && !isExpired && (
+                      {promo.isActive && !isExpired && (
                         <span className="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-semibold">Actif</span>
                       )}
                       {isExpired && (
                         <span className="px-2 py-1 bg-red-100 text-red-700 rounded-full text-xs font-semibold">Expiré</span>
                       )}
-                      {!promo.active && (
+                      {!promo.isActive && (
                         <span className="px-2 py-1 bg-gray-100 text-gray-700 rounded-full text-xs font-semibold">Désactivé</span>
                       )}
                     </div>
                   </div>
 
-                  <p className="text-gray-600 text-sm mb-4">{promo.description}</p>
+                  <p className="text-gray-600 text-sm mb-4">{promo.description || 'Pas de description.'}</p>
 
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
                     <div>
@@ -209,22 +204,22 @@ export default function AdminPromotions() {
                     <div>
                       <p className="text-xs text-gray-500">Réduction</p>
                       <p className="font-semibold text-gray-900">
-                        {promo.discountType === 'PERCENTAGE' ? `${promo.discountValue}%` : `${promo.discountValue} MRU`}
+                        {promo.discountType === 'percentage' ? `${promo.discountValue}%` : `${promo.discountValue} MRU`}
                       </p>
                     </div>
                     <div>
                       <p className="text-xs text-gray-500">Validité</p>
-                      <p className="text-sm text-gray-700">{promo.validFrom} → {promo.validUntil}</p>
+                      <p className="text-sm text-gray-700">{promo.expiryDate}</p>
                     </div>
                     <div>
                       <p className="text-xs text-gray-500">Utilisations</p>
                       <p className="text-sm font-semibold text-gray-900">
-                        {promo.usedCount} / {promo.usageLimit || '∞'}
+                        {promo.usedCount} / {promo.maxUses || '∞'}
                       </p>
                     </div>
                   </div>
 
-                  {promo.usageLimit && (
+                  {promo.maxUses && (
                     <div>
                       <div className="flex justify-between text-xs text-gray-500 mb-1">
                         <span>Progression</span>
@@ -244,12 +239,12 @@ export default function AdminPromotions() {
                   <button 
                     onClick={() => handleToggleActive(promo.id)}
                     className={`px-4 py-2 rounded-lg font-medium text-sm transition-colors ${
-                      promo.active 
+                      promo.isActive 
                         ? 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200' 
                         : 'bg-green-100 text-green-700 hover:bg-green-200'
                     }`}
                   >
-                    {promo.active ? 'Désactiver' : 'Activer'}
+                    {promo.isActive ? 'Désactiver' : 'Activer'}
                   </button>
                   <button 
                     onClick={() => handleEdit(promo)}
@@ -272,7 +267,7 @@ export default function AdminPromotions() {
         })}
       </div>
 
-      {promotions.length === 0 && (
+      {promoCodes.length === 0 && (
         <div className="text-center py-12 bg-white rounded-xl border border-dashed border-gray-300">
           <p className="text-gray-500">Aucune promotion créée pour le moment.</p>
         </div>
@@ -337,11 +332,11 @@ export default function AdminPromotions() {
               <label className="block text-sm font-medium text-gray-700 mb-2">Type Réduction *</label>
               <select 
                 value={formData.discountType}
-                onChange={(e) => setFormData({...formData, discountType: e.target.value as 'PERCENTAGE' | 'FIXED'})}
+                onChange={(e) => setFormData({...formData, discountType: e.target.value as 'percentage' | 'fixed'})}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#C6A87C] focus:border-transparent"
               >
-                <option value="PERCENTAGE">Pourcentage (%)</option>
-                <option value="FIXED">Montant Fixe (MRU)</option>
+                <option value="percentage">Pourcentage (%)</option>
+                <option value="fixed">Montant Fixe (MRU)</option>
               </select>
             </div>
             <div>

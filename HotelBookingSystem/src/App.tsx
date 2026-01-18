@@ -59,6 +59,8 @@ import { NotificationProvider } from './context/NotificationContext';
 import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { MessageProvider } from './context/MessageContext';
+import { PromoCodeProvider } from './context/PromoCodeContext';
+import { InvitationProvider } from './context/InvitationContext';
 import { Toaster } from 'react-hot-toast';
 import { ProtectedRoute } from './components/common/ProtectedRoute';
 import { ChatWindow } from './components/common/ChatWindow';
@@ -68,78 +70,82 @@ function App() {
     <ThemeProvider>
       <AuthProvider>
         <AuditLogProvider>
-          <MessageProvider>
-            <FavoritesProvider>
-          <ReviewsProvider>
-            <NotificationProvider>
-            <BrowserRouter>
-              <Toaster position="top-right" />
-              <Routes>
-                <Route path="/" element={<HomePage />} />
-                <Route path="/hotels" element={<HotelsResort />} />
-                <Route path="/hotels/:id" element={<HotelDetailsPage />} />
-                <Route path="/hotels/:hotelId/rooms/:roomId" element={<RoomDetailsPage />} />
-                <Route path="/login" element={<LoginPage />} />
-                <Route path="/register" element={<RegisterPage />} />
-                <Route path="/booking" element={<ProtectedRoute allowedRoles={['USER']}><BookingPage /></ProtectedRoute>} />
-                <Route path="/profile-old" element={<UserProfilePage />} />
-                <Route path="/contact" element={<ContactPage />} />
-                <Route path="/my-bookings" element={<MyBookingsPage />} />
-                
-                {/* Admin Routes */}
-                <Route path="/admin" element={<ProtectedRoute allowedRoles={['ADMIN']}><AdminLayout /></ProtectedRoute>}>
-                  <Route index element={<AdminDashboard />} />
-                  <Route path="hotels" element={<AdminHotels />} />
-                  <Route path="bookings" element={<AdminBookings />} />
-                  <Route path="users" element={<AdminUsers />} />
-                  <Route path="analytics" element={<AdminAnalytics />} />
-                  <Route path="promotions" element={<AdminPromotions />} />
-                  <Route path="transactions" element={<AdminTransactions />} />
-                  <Route path="loyalty" element={<AdminLoyalty />} />
-                  <Route path="reviews" element={<AdminReviews />} />
-                  <Route path="calendar" element={<AdminCalendar />} />
-                  <Route path="audit-logs" element={<AdminAuditLogs />} />
-                  <Route path="config" element={<AdminSystemConfig />} />
-                  <Route path="settings" element={<AdminSettings />} />
-                </Route>
+          <PromoCodeProvider>
+            <InvitationProvider>
+              <MessageProvider>
+              <FavoritesProvider>
+                <ReviewsProvider>
+                  <NotificationProvider>
+                    <BrowserRouter>
+                      <Toaster position="top-right" />
+                      <Routes>
+                        <Route path="/" element={<HomePage />} />
+                        <Route path="/hotels" element={<HotelsResort />} />
+                        <Route path="/hotels/:id" element={<HotelDetailsPage />} />
+                        <Route path="/hotels/:hotelId/rooms/:roomId" element={<RoomDetailsPage />} />
+                        <Route path="/login" element={<LoginPage />} />
+                        <Route path="/register" element={<RegisterPage />} />
+                        <Route path="/booking" element={<ProtectedRoute allowedRoles={['USER']}><BookingPage /></ProtectedRoute>} />
+                        <Route path="/profile-old" element={<UserProfilePage />} />
+                        <Route path="/contact" element={<ContactPage />} />
+                        <Route path="/my-bookings" element={<MyBookingsPage />} />
+                        
+                        {/* Admin Routes */}
+                        <Route path="/admin" element={<ProtectedRoute allowedRoles={['ADMIN']}><AdminLayout /></ProtectedRoute>}>
+                          <Route index element={<AdminDashboard />} />
+                          <Route path="hotels" element={<AdminHotels />} />
+                          <Route path="bookings" element={<AdminBookings />} />
+                          <Route path="users" element={<AdminUsers />} />
+                          <Route path="analytics" element={<AdminAnalytics />} />
+                          <Route path="promotions" element={<AdminPromotions />} />
+                          <Route path="transactions" element={<AdminTransactions />} />
+                          <Route path="loyalty" element={<AdminLoyalty />} />
+                          <Route path="reviews" element={<AdminReviews />} />
+                          <Route path="calendar" element={<AdminCalendar />} />
+                          <Route path="audit-logs" element={<AdminAuditLogs />} />
+                          <Route path="config" element={<AdminSystemConfig />} />
+                          <Route path="settings" element={<AdminSettings />} />
+                        </Route>
 
-                {/* Owner Routes */}
-                <Route path="/owner" element={<ProtectedRoute allowedRoles={['OWNER']}><OwnerLayout /></ProtectedRoute>}>
-                  <Route index element={<OwnerDashboard />} />
-                  <Route path="hotel-info" element={<OwnerHotelInfo />} />
-                  <Route path="rooms" element={<OwnerRooms />} />
-                  <Route path="rooms/new" element={<OwnerRoomForm />} />
-                  <Route path="rooms/:id" element={<OwnerRoomForm />} />
-                  <Route path="bookings" element={<OwnerBookings />} />
-                  <Route path="calendar" element={<OwnerCalendar />} />
-                  <Route path="reviews" element={<OwnerReviews />} />
-                  <Route path="finance" element={<OwnerFinance />} />
-                  <Route path="messages" element={<OwnerMessages />} />
-                  <Route path="settings" element={<AdminSettings />} /> {/* Reuse settings for now */}
-                </Route>
+                        {/* Owner Routes */}
+                        <Route path="/owner" element={<ProtectedRoute allowedRoles={['OWNER']}><OwnerLayout /></ProtectedRoute>}>
+                          <Route index element={<OwnerDashboard />} />
+                          <Route path="hotel-info" element={<OwnerHotelInfo />} />
+                          <Route path="rooms" element={<OwnerRooms />} />
+                          <Route path="rooms/new" element={<OwnerRoomForm />} />
+                          <Route path="rooms/:id" element={<OwnerRoomForm />} />
+                          <Route path="bookings" element={<OwnerBookings />} />
+                          <Route path="calendar" element={<OwnerCalendar />} />
+                          <Route path="reviews" element={<OwnerReviews />} />
+                          <Route path="finance" element={<OwnerFinance />} />
+                          <Route path="messages" element={<OwnerMessages />} />
+                          <Route path="settings" element={<AdminSettings />} /> {/* Reuse settings for now */}
+                        </Route>
 
-                {/* Client Dashboard Routes */}
-                <Route path="/profile" element={<ProtectedRoute allowedRoles={['USER']}><ClientLayout /></ProtectedRoute>}>
-                  <Route index element={<ClientDashboard />} />
-                  <Route path="bookings" element={<MyBookings />} />
-                  <Route path="favorites" element={<MyFavorites />} />
-                  <Route path="reviews" element={<MyReviews />} />
-                  <Route path="payments" element={<PaymentHistory />} />
-                  <Route path="loyalty" element={<LoyaltyPage />} />
-                  <Route path="messages" element={<ClientMessages />} />
-                  <Route path="settings" element={<ClientSettings />} />
-                </Route>
-                
-              </Routes>        
-            </BrowserRouter>
-          </NotificationProvider>
-        </ReviewsProvider>
-        </FavoritesProvider>
-        <ChatWindow />
-      </MessageProvider>
-      </AuditLogProvider>
-    </AuthProvider>
-  </ThemeProvider>
+                        {/* Client Dashboard Routes */}
+                        <Route path="/profile" element={<ProtectedRoute allowedRoles={['USER']}><ClientLayout /></ProtectedRoute>}>
+                          <Route index element={<ClientDashboard />} />
+                          <Route path="bookings" element={<MyBookings />} />
+                          <Route path="favorites" element={<MyFavorites />} />
+                          <Route path="reviews" element={<MyReviews />} />
+                          <Route path="payments" element={<PaymentHistory />} />
+                          <Route path="loyalty" element={<LoyaltyPage />} />
+                          <Route path="messages" element={<ClientMessages />} />
+                          <Route path="settings" element={<ClientSettings />} />
+                        </Route>
+                        
+                      </Routes>        
+                    </BrowserRouter>
+                  </NotificationProvider>
+                </ReviewsProvider>
+              </FavoritesProvider>
+              <ChatWindow />
+            </MessageProvider>
+          </InvitationProvider>
+          </PromoCodeProvider>
+        </AuditLogProvider>
+      </AuthProvider>
+    </ThemeProvider>
   );
 }
 

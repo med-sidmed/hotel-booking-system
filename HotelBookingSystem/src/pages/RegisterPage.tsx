@@ -1,9 +1,16 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useInvitations } from '../context/InvitationContext';
 import toast from 'react-hot-toast';
+import type { Invitation } from '../types';
 
 export default function RegisterPage() {
+  const [searchParams] = useSearchParams();
+  const token = searchParams.get('token');
+  const [invitation, setInvitation] = useState<Invitation | null>(null);
+  const [isTokenValidating, setIsTokenValidating] = useState(!!token);
+
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -14,6 +21,22 @@ export default function RegisterPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
   const { login } = useAuth();
+  const { validateToken, markInvitationAsUsed } = useInvitations();
+
+  useEffect(() => {
+    if (token) {
+      const invite = validateToken(token);
+      if (invite) {
+        setInvitation(invite);
+        if (invite.email) {
+          setFormData(prev => ({ ...prev, email: invite.email! }));
+        }
+      } else {
+        toast.error('Invitation invalide ou expirée');
+      }
+      setIsTokenValidating(false);
+    }
+  }, [token, validateToken]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
@@ -30,14 +53,32 @@ export default function RegisterPage() {
       return;
     }
 
+    if (invitation && invitation.email && formData.email !== invitation.email) {
+      toast.error(`Cette invitation est réservée à ${invitation.email}`);
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       // Simulate registration
       await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      const role = invitation ? invitation.role : 'USER';
+      
       // Auto login after registration
-      await login(formData.email, 'USER');
+      await login(formData.email, role);
+      
+      if (token) {
+        markInvitationAsUsed(token);
+      }
+
       toast.success('Compte créé avec succès !');
-      navigate('/profile');
+      
+      // Redirect based on role
+      if (role === 'ADMIN') navigate('/admin');
+      else if (role === 'OWNER') navigate('/owner');
+      else navigate('/profile');
+      
     } catch (error) {
       toast.error("Erreur lors de l'inscription");
     } finally {
@@ -52,15 +93,22 @@ export default function RegisterPage() {
       <div className="flex-grow flex flex-col justify-center py-12 sm:px-6 lg:px-8">
           <div className="sm:mx-auto sm:w-full sm:max-w-md">
             <h2 className="mt-6 text-center text-3xl font-serif font-bold text-[#3d2817]">
-              Rejoignez Luxotel
+              {invitation ? `Invitation ${invitation.role === 'ADMIN' ? 'Administrateur' : 'Propriétaire'}` : 'Rejoignez Luxotel'}
             </h2>
             <p className="mt-2 text-center text-sm text-gray-600">
-              Créez un compte pour débloquer des avantages exclusifs
+              {invitation 
+                ? `Vous avez été invité à rejoindre la plateforme en tant que ${invitation.role === 'ADMIN' ? 'administrateur' : 'propriétaire d\'hôtel'}.`
+                : 'Créez un compte pour débloquer des avantages exclusifs'}
             </p>
           </div>
 
           <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-            <div className="bg-white py-8 px-4 shadow-xl rounded-lg sm:px-10 border border-[#e5e7eb]">
+            {isTokenValidating ? (
+              <div className="bg-white py-8 px-4 shadow-xl rounded-lg sm:px-10 border border-[#e5e7eb] flex justify-center">
+                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#6B5434]"></div>
+              </div>
+            ) : (
+              <div className="bg-white py-8 px-4 shadow-xl rounded-lg sm:px-10 border border-[#e5e7eb]">
               <form className="space-y-6" onSubmit={handleSubmit}>
                 <div>
                   <label htmlFor="name" className="block text-sm font-medium text-gray-700">
@@ -107,9 +155,10 @@ export default function RegisterPage() {
                       type="email"
                       autoComplete="email"
                       required
+                      disabled={!!(invitation && invitation.email)}
                       value={formData.email}
                       onChange={handleChange}
-                      className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#6B5434] focus:border-transparent sm:text-sm"
+                      className={`appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#6B5434] focus:border-transparent sm:text-sm ${invitation && invitation.email ? 'bg-gray-50 text-gray-500 cursor-not-allowed' : ''}`}
                     />
                   </div>
                 </div>
@@ -179,10 +228,11 @@ export default function RegisterPage() {
                     Se connecter
                   </button>
                 </div>
-            </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
-     </div>
   );
 }

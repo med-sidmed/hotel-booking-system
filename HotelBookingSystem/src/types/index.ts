@@ -176,3 +176,13 @@ export interface PricingRule {
   dayOfWeek?: number[]; // 0-6 (Sunday-Saturday)
 }
 
+export interface Invitation {
+  id: string;
+  token: string;
+  email?: string;
+  role: 'ADMIN' | 'OWNER';
+  expiresAt: string;
+  used: boolean;
+  createdAt: string;
+}
+

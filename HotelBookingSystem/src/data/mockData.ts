@@ -104,7 +104,7 @@ export const mockBookings: any[] = [
     {
         id: "BK-001",
         hotelId: 1,
-        userId: 101,
+        userId: "client-1",
         userName: "Sophie Martin",
         roomType: "Suite Deluxe Océan",
         checkIn: "2026-02-10",
@@ -116,7 +116,7 @@ export const mockBookings: any[] = [
     {
         id: "BK-002",
         hotelId: 1,
-        userId: 102,
+        userId: "client-2",
         userName: "Pierre Dupont",
         roomType: "Chambre Standard Ville",
         checkIn: "2026-03-01",
@@ -128,7 +128,7 @@ export const mockBookings: any[] = [
     {
         id: "BK-003",
         hotelId: 1,
-        userId: 103,
+        userId: "client-1",
         userName: "Jean Kevin",
         roomType: "Suite Deluxe Océan",
         checkIn: "2026-04-10",
@@ -140,7 +140,7 @@ export const mockBookings: any[] = [
     {
         id: "BK-004",
         hotelId: 2, // Different hotel
-        userId: 104,
+        userId: "client-2",
         userName: "Marie Curie",
         roomType: "Villa Bord de Mer",
         checkIn: "2026-05-01",
@@ -158,7 +158,7 @@ export const mockReviews: Review[] = [
     {
         id: "REV-001",
         hotelId: 1,
-        userId: 101,
+        userId: "client-1",
         userName: "Sophie Martin",
         userAvatar: "https://i.pravatar.cc/150?img=1",
         rating: 5,
@@ -177,7 +177,7 @@ export const mockReviews: Review[] = [
     {
         id: "REV-002",
         hotelId: 1,
-        userId: 102,
+        userId: "client-2",
         userName: "Pierre Dupont",
         userAvatar: "https://i.pravatar.cc/150?img=2",
         rating: 4,
@@ -189,7 +189,7 @@ export const mockReviews: Review[] = [
     {
         id: "REV-003",
         hotelId: 2,
-        userId: 104,
+        userId: "client-1",
         userName: "Marie Curie",
         userAvatar: "https://i.pravatar.cc/150?img=3",
         rating: 5,
@@ -204,7 +204,7 @@ export const mockReviews: Review[] = [
 export const mockTransactions: Transaction[] = [
     {
         id: "TRX-001",
-        userId: 101,
+        userId: "client-1",
         bookingId: "BK-001",
         amount: 1750,
         currency: "MRU",
@@ -216,7 +216,7 @@ export const mockTransactions: Transaction[] = [
     },
     {
         id: "TRX-002",
-        userId: 102,
+        userId: "client-2",
         bookingId: "BK-002",
         amount: 216,
         currency: "MRU",
@@ -227,7 +227,7 @@ export const mockTransactions: Transaction[] = [
     },
     {
         id: "TRX-003",
-        userId: 104,
+        userId: "client-2",
         bookingId: "BK-004",
         amount: 2700,
         currency: "MRU",
@@ -243,7 +243,7 @@ export const mockTransactions: Transaction[] = [
 export const mockNotifications: Notification[] = [
     {
         id: "NOT-001",
-        userId: 101,
+        userId: "client-1",
         type: "BOOKING_CONFIRMED",
         title: "Réservation Confirmée",
         message: "Votre réservation pour l'Hôtel Élégance Royal a été confirmée !",
@@ -253,7 +253,7 @@ export const mockNotifications: Notification[] = [
     },
     {
         id: "NOT-002",
-        userId: 101,
+        userId: "client-1",
         type: "PAYMENT_SUCCESS",
         title: "Paiement Réussi",
         message: "Votre paiement de 1750 MRU a été traité avec succès.",
@@ -262,7 +262,7 @@ export const mockNotifications: Notification[] = [
     },
     {
         id: "NOT-003",
-        userId: 102,
+        userId: "client-2",
         type: "PROMOTION",
         title: "Offre Spéciale -20%",
         message: "Profitez de -20% sur votre prochaine réservation avec le code WINTER2026",
@@ -272,7 +272,7 @@ export const mockNotifications: Notification[] = [
     },
     {
         id: "NOT-004",
-        userId: 104,
+        userId: "client-2",
         type: "REVIEW_REQUEST",
         title: "Partagez votre expérience",
         message: "Comment s'est passé votre séjour à Station Balnéaire Palmier ?",
@@ -282,7 +282,7 @@ export const mockNotifications: Notification[] = [
     },
     {
         id: "NOT-OWNER-001",
-        userId: 1, // Owner
+        userId: "owner-1",
         type: "BOOKING_CONFIRMED",
         title: "Nouvelle Réservation",
         message: "Une nouvelle réservation a été effectuée pour la Suite Deluxe par Jean Valjean.",
@@ -292,22 +292,23 @@ export const mockNotifications: Notification[] = [
     },
     {
         id: "NOT-OWNER-002",
-        userId: 1, // Owner
+        userId: "owner-1",
         type: "MESSAGE",
         title: "Nouveau Message",
         message: "Le client Marc Lévy vous a envoyé une question sur les services de l'hôtel.",
         read: false,
-        date: new Date(Date.now() - 1000 * 60 * 30).toISOString(), // 30 mins ago
+        date: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
         actionUrl: "/owner/messages"
     },
     {
-        id: "NOT-OWNER-003",
-        userId: 1, // Owner
-        type: "PAYMENT_SUCCESS",
-        title: "Paiement Reçu",
-        message: "Un paiement de 1500 MRU a été reçu pour la réservation BK-789.",
-        read: true,
-        date: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(), // 2 hours ago
+        id: "NOT-ADMIN-001",
+        userId: "admin-1",
+        type: "PROMOTION",
+        title: "Système: Promo Automatique",
+        message: "La promotion SUMMER2026 a été activée automatiquement.",
+        read: false,
+        date: new Date().toISOString(),
+        actionUrl: "/admin/promotions"
     }
 ];
 
@@ -315,9 +316,9 @@ export const mockNotifications: Notification[] = [
 export const mockMessages: Message[] = [
     {
         id: "MSG-001",
-        senderId: 101,
+        senderId: "client-1",
         senderName: "Sophie Martin",
-        receiverId: 1,
+        receiverId: "owner-1",
         conversationId: "CONV-101-1",
         content: "Bonjour, est-il possible d'avoir une chambre avec vue sur mer ?",
         timestamp: "2026-01-14T16:20:00Z",
@@ -325,9 +326,9 @@ export const mockMessages: Message[] = [
     },
     {
         id: "MSG-002",
-        senderId: 1,
+        senderId: "owner-1",
         senderName: "Hôtel Élégance Royal",
-        receiverId: 101,
+        receiverId: "client-1",
         conversationId: "CONV-101-1",
         content: "Bonjour ! Bien sûr, nous avons des suites avec vue mer disponibles. Je vous contacte pour les détails.",
         timestamp: "2026-01-14T16:45:00Z",
@@ -335,9 +336,9 @@ export const mockMessages: Message[] = [
     },
     {
         id: "MSG-003",
-        senderId: 102,
+        senderId: "client-2",
         senderName: "Pierre Dupont",
-        receiverId: 1,
+        receiverId: "owner-1",
         conversationId: "CONV-102-1",
         content: "Le petit déjeuner est-il inclus dans le tarif ?",
         timestamp: "2026-01-20T11:00:00Z",
@@ -352,8 +353,8 @@ export const mockConversations: Conversation[] = [
     {
         id: "CONV-101-1",
         participants: [
-            { id: 101, name: "Sophie Martin", role: "USER", avatar: "https://i.pravatar.cc/150?img=1" },
-            { id: 1, name: "Hôtel Élégance Royal", role: "OWNER", avatar: "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=50&h=50&fit=crop" }
+            { id: "client-1", name: "Sophie Martin", role: "USER", avatar: "https://i.pravatar.cc/150?img=1" },
+            { id: "owner-1", name: "Hôtel Élégance Royal", role: "OWNER", avatar: "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=50&h=50&fit=crop" }
         ],
         unreadCount: 0,
         lastMessage: mockMessages[1]
@@ -361,8 +362,8 @@ export const mockConversations: Conversation[] = [
     {
         id: "CONV-102-1",
         participants: [
-            { id: 102, name: "Pierre Dupont", role: "USER", avatar: "https://i.pravatar.cc/150?img=2" },
-            { id: 1, name: "Hôtel Élégance Royal", role: "OWNER", avatar: "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=50&h=50&fit=crop" }
+            { id: "client-2", name: "Pierre Dupont", role: "USER", avatar: "https://i.pravatar.cc/150?img=2" },
+            { id: "owner-1", name: "Hôtel Élégance Royal", role: "OWNER", avatar: "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=50&h=50&fit=crop" }
         ],
         unreadCount: 1,
         lastMessage: mockMessages[2]
@@ -372,7 +373,7 @@ export const mockConversations: Conversation[] = [
 // Mock Loyalty Points
 export const mockLoyaltyPoints: LoyaltyPoints[] = [
     {
-        userId: 101,
+        userId: "client-1",
         totalPoints: 1750,
         tier: "GOLD",
         transactionHistory: [
@@ -391,7 +392,7 @@ export const mockLoyaltyPoints: LoyaltyPoints[] = [
         ]
     },
     {
-        userId: 102,
+        userId: "client-2",
         totalPoints: 720,
         tier: "SILVER",
         transactionHistory: [
@@ -427,6 +428,13 @@ export const mockUsers: UserLogin[] = [
         id: "client-1",
         name: "Sophie Martin",
         email: "client@user.com",
+        password: "user",
+        role: "USER"
+    },
+    {
+        id: "client-2",
+        name: "Pierre Dupont",
+        email: "pierre@user.com",
         password: "user",
         role: "USER"
     }
