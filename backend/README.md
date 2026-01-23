@@ -212,7 +212,7 @@ L'API sera accessible sur `http://localhost:8000`.
 }
 ```
 
-#### **LoyaltyPoints** 
+#### **LoyaltyPoints**
 
 ```python
 {
@@ -380,21 +380,7 @@ make run          # Lancer le serveur de développement
 make migration    # Créer et appliquer les migrations
 make superuser    # Créer un superutilisateur
 make test         # Lancer les tests
-make lint         # Vérifier le code (flake8/black)
 make shell        # Ouvrir le shell Django
-```
-
-## 🧪 Tests
-
-```bash
-# Lancer tous les tests
-make test
-
-# Tests avec couverture
-uv run pytest --cov=.
-
-# Tests d'un module spécifique
-uv run pytest apps/hotels/tests/
 ```
 
 ## 🔑 Comptes de Test

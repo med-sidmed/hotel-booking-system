@@ -1,7 +1,7 @@
 
-.PHONY: run migration superuser test
+.PHONY: run migration superuser django
 run:
-	uv run manage.py runserver django
+	uv run manage.py runserver 
 
 migration:
 	uv run manage.py makemigrations && uv run manage.py migrate
@@ -12,5 +12,4 @@ superuser:
 django:
 	uv add django
 
-test:
-	uv run pytest --cov=.
+
