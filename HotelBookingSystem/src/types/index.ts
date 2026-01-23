@@ -17,11 +17,11 @@ export interface Hotel {
   description: string;
   rating: number;
   reviews: number;
-  image?: string; // Primary image (for backward compatibility)
-  images?: string[]; // Multiple hotel images for gallery
+  image?: string; 
+  images?: string[];  
   pricePerNight?: number;
   rooms: Room[];
-  amenities?: string[]; // Hotel-level amenities
+  amenities?: string[];  
   phone?: string;
   email?: string;
   website?: string;
@@ -61,7 +61,7 @@ export interface Review {
     text: string;
     date: string;
   };
-  verified: boolean; // Has user stayed at hotel
+  verified: boolean;  
 }
 
 export interface Transaction {
@@ -110,7 +110,7 @@ export interface Conversation {
   }[];
   lastMessage?: Message;
   unreadCount: number;
-  hotelId?: number | string; // Optionally link to a hotel context
+  hotelId?: number | string; 
 }
 
 export interface LoyaltyPoints {
