@@ -1,10 +1,10 @@
 import React from "react";
 
 const navigation = [
-  { name: "Home", href: "#", current: false },
-  { name: "Hotels & Resorts", href: "#", current: false },
-  { name: "Contact", href: "#", current: false },
-  { name: "My Booking", href: "#", current: false },
+  { name: "Home", href: "/", current: false },
+  { name: "Hotels & Resorts", href: "/hotels", current: false },
+  { name: "Contact", href: "/contact", current: false },
+  { name: "My Booking", href: "/my-booking", current: false },
 ];
 
 const socialLinks = [
@@ -40,7 +40,7 @@ const socialLinks = [
   },
 ];
 
-function classNames(...classes) {
+function classNames(...classes: (string | boolean | undefined | null)[]) {
   return classes.filter(Boolean).join(" ");
 }
 

@@ -1,10 +1,9 @@
-import React from "react";
+
 import Header from "../components/Header";
 import Hero from "../components/Hero";
 import PopularHotels from "../components/PopularHotels";
 import WhyChooseUs from "../components/WhyChooseUs";
-import SummerOffer from "../components/SummerOffer";
-import Testimonials from "../components/Testimonials";
+ import Testimonials, { SubmitReview } from "../components/Testimonials";
 import Footer from "../components/Footer";
 
 export default function HomePage(){
@@ -13,8 +12,10 @@ export default function HomePage(){
          <Hero />
          <PopularHotels />
          <WhyChooseUs />
-         <SummerOffer />
          <Testimonials />
+          <div className="flex justify-center pb-8">
+        <SubmitReview />
+      </div>
          <Footer />
   </div>)
 }
