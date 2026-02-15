@@ -25,7 +25,6 @@ import AdminHotels from './Admin/pages/AdminHotels';
 import AdminBookings from './Admin/pages/AdminBookings';
 import AdminAnalytics from './Admin/pages/AdminAnalytics';
 import AdminPromotions from './Admin/pages/AdminPromotions';
-import AdminLoyalty from './Admin/pages/AdminLoyalty';
 import AdminTransactions from './Admin/pages/AdminTransactions';
 import AdminCalendar from './Admin/pages/AdminCalendar';
 import AdminSystemConfig from './Admin/pages/AdminSystemConfig';
@@ -47,7 +46,6 @@ import OwnerMessages from './owner/pages/OwnerMessages';
 import ClientLayout from './client/layouts/ClientLayout';
 import ClientDashboard from './client/pages/ClientDashboard';
 import MyBookings from './client/pages/MyBookings';
-import LoyaltyPage from './client/pages/LoyaltyPage';
 import MyReviews from './client/pages/MyReviews';
 import PaymentHistory from './client/pages/PaymentHistory';
 import MyFavorites from './client/pages/MyFavorites';
@@ -99,7 +97,6 @@ function App() {
                           <Route path="analytics" element={<AdminAnalytics />} />
                           <Route path="promotions" element={<AdminPromotions />} />
                           <Route path="transactions" element={<AdminTransactions />} />
-                          <Route path="loyalty" element={<AdminLoyalty />} />
                           <Route path="reviews" element={<AdminReviews />} />
                           <Route path="calendar" element={<AdminCalendar />} />
                           <Route path="audit-logs" element={<AdminAuditLogs />} />
@@ -129,7 +126,6 @@ function App() {
                           <Route path="favorites" element={<MyFavorites />} />
                           <Route path="reviews" element={<MyReviews />} />
                           <Route path="payments" element={<PaymentHistory />} />
-                          <Route path="loyalty" element={<LoyaltyPage />} />
                           <Route path="messages" element={<ClientMessages />} />
                           <Route path="settings" element={<ClientSettings />} />
                         </Route>

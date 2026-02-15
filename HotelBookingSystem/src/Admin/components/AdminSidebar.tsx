@@ -6,7 +6,6 @@ import {
   Users, 
   Settings,
   TrendingUp,
-  Gift,
   CreditCard,
   Tag,
   Globe,
@@ -18,7 +17,7 @@ import { useAuth } from '../../context/AuthContext';
 
 export function AdminSidebar() {
   const location = useLocation();
-  const { user, isAuthenticated, logout } = useAuth();
+  const { logout } = useAuth();
 
   const isActive = (path: string) => location.pathname === path;
 
@@ -44,7 +43,6 @@ export function AdminSidebar() {
         { name: 'Analytics', path: '/admin/analytics', icon: TrendingUp },
         { name: 'Promotions', path: '/admin/promotions', icon: Tag },
         { name: 'Transactions', path: '/admin/transactions', icon: CreditCard },
-        { name: 'Programme Fidélité', path: '/admin/loyalty', icon: Gift },
       ]
     },
     {

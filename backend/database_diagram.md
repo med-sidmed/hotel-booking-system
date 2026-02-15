@@ -161,25 +161,6 @@ classDiagram
        +deactivate()
    }
 
-   class LoyaltyPoints {
-       +UUID userId
-       +Integer totalPoints
-       +LoyaltyTier tier
-       +DateTime createdAt
-       +DateTime updatedAt
-       +addPoints()
-       +deductPoints()
-       +updateTier()
-   }
-
-   class LoyaltyTransaction {
-       +UUID id
-       +UUID loyaltyPointsId
-       +Integer points
-       +String reason
-       +DateTime createdAt
-   }
-
    class ActivityLog {
        +UUID id
        +UUID userId
@@ -277,14 +258,6 @@ classDiagram
        FIXED
    }
 
-   class LoyaltyTier {
-       <<enumeration>>
-       BRONZE
-       SILVER
-       GOLD
-       PLATINUM
-   }
-
    class SeasonType {
        <<enumeration>>
        LOW
@@ -319,7 +292,6 @@ classDiagram
    User "1" --> "0..*" Notification : receives
    User "1" --> "0..*" Message : sends
    User "0..*" --> "0..*" Conversation : participates
-   User "1" --> "0..1" LoyaltyPoints : has
    User "1" --> "0..*" ActivityLog : generates
 
    Hotel "1" --> "0..*" Room : contains
@@ -334,8 +306,6 @@ classDiagram
 
    Conversation "1" --> "0..*" Message : contains
 
-   LoyaltyPoints "1" --> "0..*" LoyaltyTransaction : tracks
-
    %% Enum associations
    User --> UserRole
    Booking --> BookingStatus
@@ -345,7 +315,6 @@ classDiagram
    Transaction --> PaymentType
    Notification --> NotificationType
    Promotion --> DiscountType
-   LoyaltyPoints --> LoyaltyTier
    PricingRule --> SeasonType
    ActivityLog --> ActionType
    ActivityLog --> EntityType

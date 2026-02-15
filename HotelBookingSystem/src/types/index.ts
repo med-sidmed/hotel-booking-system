@@ -17,11 +17,11 @@ export interface Hotel {
   description: string;
   rating: number;
   reviews: number;
-  image?: string; 
-  images?: string[];  
+  image?: string;
+  images?: string[];
   pricePerNight?: number;
   rooms: Room[];
-  amenities?: string[];  
+  amenities?: string[];
   phone?: string;
   email?: string;
   website?: string;
@@ -61,7 +61,7 @@ export interface Review {
     text: string;
     date: string;
   };
-  verified: boolean;  
+  verified: boolean;
 }
 
 export interface Transaction {
@@ -110,19 +110,7 @@ export interface Conversation {
   }[];
   lastMessage?: Message;
   unreadCount: number;
-  hotelId?: number | string; 
-}
-
-export interface LoyaltyPoints {
-  userId: number | string;
-  totalPoints: number;
-  tier: 'BRONZE' | 'SILVER' | 'GOLD' | 'PLATINUM';
-  transactionHistory: {
-    id: string;
-    points: number;
-    reason: string;
-    date: string;
-  }[];
+  hotelId?: number | string;
 }
 
 export interface Promotion {
@@ -158,7 +146,6 @@ export interface UserProfile extends UserLogin {
   address?: string;
   avatar?: string;
   dateOfBirth?: string;
-  loyaltyPoints?: number;
   preferences?: {
     language: 'fr' | 'en' | 'ar';
     currency: 'MRU' | 'EUR' | 'USD';

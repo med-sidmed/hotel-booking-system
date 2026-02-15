@@ -4,7 +4,7 @@
 
 Luxotel est une API RESTful robuste pour un système de réservation d'hôtels de luxe. Elle gère trois types d'utilisateurs : **Clients**, **Propriétaires d'hôtels** (Owners) et **Administrateurs**, avec un système complet de gestion des accès basé sur les rôles (RBAC).
 
-Ce backend a été conçu pour supporter une application Frontend React moderne, offrant des fonctionnalités temps-réel (messagerie), de fidélité et de gestion avancée.
+Ce backend a été conçu pour supporter une application Frontend React moderne, offrant des fonctionnalités temps-réel (messagerie) et de gestion avancée.
 
 ## 🚀 Technologies Utilisées
 
@@ -45,7 +45,7 @@ L'API sera accessible sur `http://localhost:8000`.
 
 | Rôle      | Permissions                                                  |
 | --------- | ------------------------------------------------------------ |
-| **USER**  | Réserver, laisser des avis, consulter ses points fidélité, chat avec propriétaires |
+| **USER**  | Réserver, laisser des avis, chat avec propriétaires |
 | **OWNER** | Gérer ses hôtels/chambres, voir le planning, répondre aux avis, stats financières |
 | **ADMIN** | Accès complet : gestion utilisateurs, validation hôtels, logs d'audit, config système |
 
@@ -111,12 +111,10 @@ L'API sera accessible sur `http://localhost:8000`.
 | `POST` | `/messages/` | Envoyer un message | Oui |
 | `PATCH` | `/messages/{id}/read/` | Marquer comme lu | Oui |
 
-### 7. Fidélité & Promotions (`/api/loyalty`, `/api/promotions`)
+### 7. Promotions (`/api/promotions`)
 
 | Méthode | Endpoint | Description | Auth Requise |
 | :--- | :--- | :--- | :--- |
-| `GET` | `/loyalty/status/` | Voir points et statut (Gold/Silver) | Client |
-| `GET` | `/loyalty/history/` | Historique des points gagnés/utilisés | Client |
 | `GET` | `/promotions/` | Voir les promos actives | Tout le monde |
 | `POST` | `/promotions/validate/` | Vérifier un code promo | Client |
 | `POST` | `/promotions/` | Créer une promotion | Admin |
@@ -155,9 +153,6 @@ Système de chat temps réel. Une conversation lie un Client et un Owner (via l'
 
 ### `Review`
 Note (1-5), commentaire, photos, et réponse du propriétaire.
-
-### `LoyaltyPoints`
-Portefeuille de points par utilisateur. Permet de monter en grade (Tier upgrade).
 
 ### `AuditLog`
 Trace toutes les actions sensibles (Crée par Admin, Modif Prix, Annulation forcée).

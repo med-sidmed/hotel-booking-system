@@ -1,4 +1,4 @@
-import type { Hotel } from "../types";
+import type { Hotel, Review, Transaction, Notification, Message, Promotion, Conversation, UserLogin } from "../types";
 
 export const hotels: Hotel[] = [
     {
@@ -96,8 +96,8 @@ export const hotels: Hotel[] = [
         pricePerNight: 90,
         description: "Un hôtel confortable et abordable au cœur de la ville.",
         rooms: []
-    } // End of hotel 5
-]; // Properly close hotels array
+    }
+];
 
 // Mock Bookings
 export const mockBookings: any[] = [
@@ -139,7 +139,7 @@ export const mockBookings: any[] = [
     },
     {
         id: "BK-004",
-        hotelId: 2, // Different hotel
+        hotelId: 2,
         userId: "client-2",
         userName: "Marie Curie",
         roomType: "Villa Bord de Mer",
@@ -152,8 +152,6 @@ export const mockBookings: any[] = [
 ];
 
 // Mock Reviews
-import type { Review, Transaction, Notification, Message, LoyaltyPoints, Promotion } from "../types";
-
 export const mockReviews: Review[] = [
     {
         id: "REV-001",
@@ -185,18 +183,6 @@ export const mockReviews: Review[] = [
         photos: [],
         date: "2026-01-08",
         verified: true
-    },
-    {
-        id: "REV-003",
-        hotelId: 2,
-        userId: "client-1",
-        userName: "Marie Curie",
-        userAvatar: "https://i.pravatar.cc/150?img=3",
-        rating: 5,
-        comment: "Villa en bord de mer absolument parfaite ! Piscine privée magnifique.",
-        photos: ["https://images.unsplash.com/photo-1582719478250-c89cae4dc85b"],
-        date: "2026-01-05",
-        verified: true
     }
 ];
 
@@ -213,29 +199,6 @@ export const mockTransactions: Transaction[] = [
         type: "FULL_PAYMENT",
         date: "2026-01-15",
         invoiceUrl: "/invoices/TRX-001.pdf"
-    },
-    {
-        id: "TRX-002",
-        userId: "client-2",
-        bookingId: "BK-002",
-        amount: 216,
-        currency: "MRU",
-        method: "CARD",
-        status: "COMPLETED",
-        type: "DEPOSIT",
-        date: "2026-01-20"
-    },
-    {
-        id: "TRX-003",
-        userId: "client-2",
-        bookingId: "BK-004",
-        amount: 2700,
-        currency: "MRU",
-        method: "BANK_TRANSFER",
-        status: "COMPLETED",
-        type: "FULL_PAYMENT",
-        date: "2026-01-25",
-        invoiceUrl: "/invoices/TRX-003.pdf"
     }
 ];
 
@@ -249,66 +212,7 @@ export const mockNotifications: Notification[] = [
         message: "Votre réservation pour l'Hôtel Élégance Royal a été confirmée !",
         read: false,
         date: "2026-01-15T14:30:00Z",
-        actionUrl: "/my-bookings"
-    },
-    {
-        id: "NOT-002",
-        userId: "client-1",
-        type: "PAYMENT_SUCCESS",
-        title: "Paiement Réussi",
-        message: "Votre paiement de 1750 MRU a été traité avec succès.",
-        read: false,
-        date: "2026-01-15T14:32:00Z"
-    },
-    {
-        id: "NOT-003",
-        userId: "client-2",
-        type: "PROMOTION",
-        title: "Offre Spéciale -20%",
-        message: "Profitez de -20% sur votre prochaine réservation avec le code WINTER2026",
-        read: true,
-        date: "2026-01-10T09:00:00Z",
-        actionUrl: "/promotions"
-    },
-    {
-        id: "NOT-004",
-        userId: "client-2",
-        type: "REVIEW_REQUEST",
-        title: "Partagez votre expérience",
-        message: "Comment s'est passé votre séjour à Station Balnéaire Palmier ?",
-        read: false,
-        date: "2026-01-26T10:00:00Z",
-        actionUrl: "/hotels/2/review"
-    },
-    {
-        id: "NOT-OWNER-001",
-        userId: "owner-1",
-        type: "BOOKING_CONFIRMED",
-        title: "Nouvelle Réservation",
-        message: "Une nouvelle réservation a été effectuée pour la Suite Deluxe par Jean Valjean.",
-        read: false,
-        date: new Date().toISOString(),
-        actionUrl: "/owner/bookings"
-    },
-    {
-        id: "NOT-OWNER-002",
-        userId: "owner-1",
-        type: "MESSAGE",
-        title: "Nouveau Message",
-        message: "Le client Marc Lévy vous a envoyé une question sur les services de l'hôtel.",
-        read: false,
-        date: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
-        actionUrl: "/owner/messages"
-    },
-    {
-        id: "NOT-ADMIN-001",
-        userId: "admin-1",
-        type: "PROMOTION",
-        title: "Système: Promo Automatique",
-        message: "La promotion SUMMER2026 a été activée automatiquement.",
-        read: false,
-        date: new Date().toISOString(),
-        actionUrl: "/admin/promotions"
+        actionUrl: "/profile/bookings"
     }
 ];
 
@@ -323,92 +227,23 @@ export const mockMessages: Message[] = [
         content: "Bonjour, est-il possible d'avoir une chambre avec vue sur mer ?",
         timestamp: "2026-01-14T16:20:00Z",
         read: true
-    },
-    {
-        id: "MSG-002",
-        senderId: "owner-1",
-        senderName: "Hôtel Élégance Royal",
-        receiverId: "client-1",
-        conversationId: "CONV-101-1",
-        content: "Bonjour ! Bien sûr, nous avons des suites avec vue mer disponibles. Je vous contacte pour les détails.",
-        timestamp: "2026-01-14T16:45:00Z",
-        read: true
-    },
-    {
-        id: "MSG-003",
-        senderId: "client-2",
-        senderName: "Pierre Dupont",
-        receiverId: "owner-1",
-        conversationId: "CONV-102-1",
-        content: "Le petit déjeuner est-il inclus dans le tarif ?",
-        timestamp: "2026-01-20T11:00:00Z",
-        read: false
     }
 ];
 
 // Mock Conversations
-import type { Conversation } from "../types";
-
 export const mockConversations: Conversation[] = [
     {
         id: "CONV-101-1",
         participants: [
             { id: "client-1", name: "Sophie Martin", role: "USER", avatar: "https://i.pravatar.cc/150?img=1" },
-            { id: "owner-1", name: "Hôtel Élégance Royal", role: "OWNER", avatar: "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=50&h=50&fit=crop" }
+            { id: "owner-1", name: "Propriétaire Hôtel", role: "OWNER", avatar: "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=50&h=50&fit=crop" }
         ],
-        unreadCount: 0,
-        lastMessage: mockMessages[1]
-    },
-    {
-        id: "CONV-102-1",
-        participants: [
-            { id: "client-2", name: "Pierre Dupont", role: "USER", avatar: "https://i.pravatar.cc/150?img=2" },
-            { id: "owner-1", name: "Hôtel Élégance Royal", role: "OWNER", avatar: "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=50&h=50&fit=crop" }
-        ],
-        unreadCount: 1,
-        lastMessage: mockMessages[2]
-    }
-];
-
-// Mock Loyalty Points
-export const mockLoyaltyPoints: LoyaltyPoints[] = [
-    {
-        userId: "client-1",
-        totalPoints: 1750,
-        tier: "GOLD",
-        transactionHistory: [
-            {
-                id: "LP-001",
-                points: 1750,
-                reason: "Réservation BK-001 complétée",
-                date: "2026-01-15"
-            },
-            {
-                id: "LP-002",
-                points: 500,
-                reason: "Bonus inscription",
-                date: "2025-12-01"
-            }
-        ]
-    },
-    {
-        userId: "client-2",
-        totalPoints: 720,
-        tier: "SILVER",
-        transactionHistory: [
-            {
-                id: "LP-003",
-                points: 720,
-                reason: "Réservation BK-002 (acompte)",
-                date: "2026-01-20"
-            }
-        ]
+        lastMessage: mockMessages[0],
+        unreadCount: 0
     }
 ];
 
 // Mock Users for Authentication
-import type { UserLogin } from "../types";
-
 export const mockUsers: UserLogin[] = [
     {
         id: "admin-1",
@@ -485,4 +320,3 @@ export const mockPromotions: Promotion[] = [
         active: true
     }
 ];
-

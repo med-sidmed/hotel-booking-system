@@ -1,45 +1,63 @@
 # Luxotel - Hotel Booking System (Frontend)
 
 ## 📌 Présentation
-Luxotel est une application web moderne et luxueuse de réservation d'hôtels. Elle offre une expérience complète pour trois types d'utilisateurs : les **Clients**, les **Propriétaires d'hôtels** (Owners) et les **Administrateurs**.
+Luxotel est une application web moderne et luxueuse de réservation d'hôtels. Elle offre une expérience complète et fluide pour trois types d'utilisateurs : les **Clients**, les **Propriétaires d'hôtels** (Owners) et les **Administrateurs**.
 
-Le projet met l'accent sur une esthétique premium, une navigation fluide et un système robuste de gestion des accès (RBAC).
+Le projet met l'accent sur une esthétique premium, une navigation intuitive et un système robuste de gestion des accès (RBAC).
 
 ## 🚀 Technologies Utilisées
 - **Core**: React 18, TypeScript, Vite
-- **Styling**: Tailwind CSS, Shadcn/ui, Lucide Icons
-- **Routing**: React Router DOM (v6) avec Routes Protégées
-- **État & Gestion**: 
-  - **AuthContext**: Gestion des sessions et rôles (RBAC).
-  - **NotificationContext**: Système d'alertes global et temps réel (simulation).
-  - **FavoritesContext**: Persistence des coups de cœur (LocalStorage).
-  - **ReviewsContext**: Gestion des avis utilisateurs.
+- **Styling**: Tailwind CSS v4, Shadcn/ui (Radix UI), Lucide Icons
+- **Animation**: Framer Motion
+- **Routing**: React Router DOM v7
+- **Data Visualization**: Recharts (pour les dashboards)
+- **Internationalisation**: i18next (Support multilingue)
+- **Gestion d'État**: Context API (Auth, Notifications, Favorites, Reviews, Chat)
 
-## 📂 Espaces Utilisateurs
+## 📂 Fonctionnalités par Rôle
 
-### 1. Espace Public
-- **Navigation**: Recherche d'hôtels, filtres par destination/prix.
-- **Détails**: Galerie d'images, équipements, avis et chambres disponibles.
-- **Réservation**: Flux de réservation sécurisé (nécessite une connexion).
+### 1️⃣ Espace Public (Tous les visiteurs)
+*   **Recherche Avancée**: Filtrage des hôtels par destination, prix, note et équipements.
+*   **Page Détails Hôtel**:
+    *   Galerie photos immersive.
+    *   Liste des équipements (Wi-Fi, Piscine, etc.).
+    *   Carte interactive de localisation.
+    *   Avis clients vérifiés.
+    *   Sélection des chambres disponibles avec prix en temps réel.
+*   **Support Multilingue**: Interface entièrement traduite (Français, Anglais, Arabe).
+*   **Thème**: Support du mode Sombre/Clair.
 
-### 2. Dashboard Client
-- **Mes Réservations**: Suivi des séjours passés et à venir.
-- **Mes Favoris**: Liste personnalisée des hôtels sauvegardés.
-- **Paramètres**: Gestion du profil, sécurité (mot de passe) et préférences de notification.
+### 2️⃣ Espace Client
+*   **Gestion des Réservations**:
+    *   Suivi des statuts (Confirmée, En attente, Annulée).
+    *   Historique complet des séjours passés.
+    *   Téléchargement des factures.
+*   **Favoris**: Sauvegarde des hôtels préférés.
+*   **Avis**: Possibilité de noter et commenter les séjours après check-out.
+*   **Messagerie Instantanée**: Chat en direct avec les propriétaires d'hôtels pour poser des questions avant/pendant le séjour.
 
-### 3. Dashboard Propriétaire (Owner)
-- **Gestion de l'Hôtel**: Mise à jour des informations, équipements et photos.
-- **Gestion des Chambres**: CRUD complet des chambres (types, prix, disponibilité).
-- **Réservations**: Confirmation ou annulation des demandes clients avec notifications automatiques.
-- **Finance**: Aperçu des revenus et statistiques simples.
+### 3️⃣ Espace Propriétaire (Owner)
+*   **Dashboard Financier**: Graphiques des revenus mensuels et taux d'occupation.
+*   **Gestion Hôtelière**:
+    *   Ajout/Modification des informations de l'hôtel.
+    *   CRUD complet des chambres (Photos, Tarifs, Disponibilités).
+*   **Gestion des Réservations**:
+    *   Validation ou refus des demandes.
+    *   Vue Calendrier pour gérer les disponibilités.
+*   **Réponse aux Avis**: Droit de réponse officiel aux commentaires clients.
+*   **Messagerie**: Gestion centralisée des conversations avec les futurs clients.
 
-### 4. Dashboard Administrateur (Admin)
-- **Analytics**: Graphiques de performance globale du système.
-- **Utilisateurs**: Gestion des rôles et comptes.
-- **Système**: Configuration globale et promotions.
+### 4️⃣ Espace Administrateur (Admin)
+*   **Vue Globale**: Analytics sur l'ensemble de la plateforme (Nombre d'utilisateurs, Volume de réservations, Chiffre d'affaires global).
+*   **Gestion Utilisateurs**:
+    *   Liste de tous les utilisateurs (Clients & Owners).
+    *   Invitation de nouveaux propriétaires.
+*   **Audit Logs**: Traçabilité complète des actions sensibles (suppressions, modifications de droits).
+*   **Promotions**: Création de codes promo globaux (ex: `SUMMER2026`).
+*   **Configuration**: Paramètres système globaux.
 
-## 🔑 Comptes de Test
-Utilisez ces identifiants pour explorer les différents dashboards :
+## 🔑 Comptes de Test (Mock Data)
+L'application utilise des données simulées (`mockData.ts`) pour permettre de tester toutes les fonctionnalités sans backend actif.
 
 | Rôle | Email | Mot de passe |
 | :--- | :--- | :--- |
@@ -50,29 +68,25 @@ Utilisez ces identifiants pour explorer les différents dashboards :
 ## 🛠️ Installation et Démarrage
 
 ### Prérequis
-- Node.js (v18+) ou Bun (v1+)
+- Node.js (v18+)
 
 ### Installation
 ```bash
-# Avec Bun
-bun install
-
-# Avec NPM
+cd HotelBookingSystem
 npm install
+# ou
+bun install
 ```
 
 ### Lancement
 ```bash
-bun run dev
-# ou
 npm run dev
+# ou
+bun run dev
 ```
 L'application sera accessible sur `http://localhost:5173`.
 
 ## 📝 Notes Techniques
-- **Données**: Entièrement simulées via `src/data/mockData.ts`.
-- **Persistence**: Les favoris, avis et sessions utilisateur sont conservés via le `LocalStorage`.
-- **RBAC**: Les routes `/admin`, `/owner` et `/profile` sont protégées. Si un utilisateur non autorisé tente d'y accéder, il est redirigé vers sa page d'accueil respective.
-
----
-Développé dans le cadre d'un mini-projet académique sur les systèmes de réservation.
+- **Mock Data**: Le backend réel peut être remplacé par les données mockées pour le développement frontend isolé.
+- **Sécurité**: Les routes `/admin`, `/owner` et `/profile` sont protégées par le composant `ProtectedRoute` qui vérifie le rôle de l'utilisateur connecté via `AuthContext`.
+- **Performance**: Utilisation de `React.lazy` et `Suspense` pour le chargement optimisé des pages.

@@ -1,13 +1,11 @@
-import { mockBookings, mockLoyaltyPoints } from '../../data/mockData';
-import { Calendar, DollarSign, Heart, Star, TrendingUp } from 'lucide-react';
+import { mockBookings } from '../../data/mockData';
+import { Calendar, DollarSign } from 'lucide-react';
 
 export default function ClientDashboard() {
   const userId = 101; // Mock logged-in user
   const userBookings = mockBookings.filter(b => b.userId === userId);
-  const loyaltyData = mockLoyaltyPoints.find(lp => lp.userId === userId);
 
   const activeBookings = userBookings.filter(b => b.status === 'CONFIRMED' || b.status === 'PENDING').length;
-  const completedBookings = userBookings.filter(b => b.status === 'COMPLETED').length;
   const totalSpent = userBookings
     .filter(b => b.status === 'CONFIRMED' || b.status === 'COMPLETED')
     .reduce((acc, curr) => acc + curr.totalPrice, 0);
@@ -20,7 +18,7 @@ export default function ClientDashboard() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
           <div className="flex items-center justify-between mb-4">
             <div className="p-3 bg-blue-50 rounded-lg text-blue-600">
@@ -39,26 +37,6 @@ export default function ClientDashboard() {
           </div>
           <h3 className="text-2xl font-bold text-gray-800">{totalSpent} MRU</h3>
           <p className="text-sm text-gray-500 mt-1">Dépenses Totales</p>
-        </div>
-
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-          <div className="flex items-center justify-between mb-4">
-            <div className="p-3 bg-yellow-50 rounded-lg text-yellow-600">
-              <Star size={24} />
-            </div>
-          </div>
-          <h3 className="text-2xl font-bold text-gray-800">{loyaltyData?.totalPoints || 0}</h3>
-          <p className="text-sm text-gray-500 mt-1">Points Fidélité</p>
-        </div>
-
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-          <div className="flex items-center justify-between mb-4">
-            <div className="p-3 bg-purple-50 rounded-lg text-purple-600">
-              <TrendingUp size={24} />
-            </div>
-          </div>
-          <h3 className="text-2xl font-bold text-gray-800">{loyaltyData?.tier || 'BRONZE'}</h3>
-          <p className="text-sm text-gray-500 mt-1">Statut Fidélité</p>
         </div>
       </div>
 

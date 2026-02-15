@@ -43,7 +43,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       role: role,
       avatar: `https://i.pravatar.cc/150?u=${email}`,
       phone: '+222 40 00 00 00',
-      loyaltyPoints: 1250,
       preferences: {
         language: 'fr',
         currency: 'MRU',

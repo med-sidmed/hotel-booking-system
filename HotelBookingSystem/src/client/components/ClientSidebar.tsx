@@ -5,7 +5,6 @@ import {
   Heart,
   User,
   CreditCard,
-  Gift,
   LogOut,
   Star,
   Home,
@@ -17,7 +16,7 @@ import { useAuth } from '@/context/AuthContext';
 
 export function ClientSidebar() {
   const location = useLocation();
-  const { user, isAuthenticated, logout } = useAuth();
+  const { logout } = useAuth();
 
   const isActive = (path: string) => location.pathname === path;
 
@@ -28,7 +27,6 @@ export function ClientSidebar() {
     { name: 'Mes Favoris', path: '/profile/favorites', icon: Heart },
     { name: 'Mes Avis', path: '/profile/reviews', icon: Star },
     { name: 'Paiements', path: '/profile/payments', icon: CreditCard },
-    { name: 'Fidélité', path: '/profile/loyalty', icon: Gift },
     { name: 'Paramètres', path: '/profile/settings', icon: User },
     { name: 'Accueil', path: '/', icon: Home },
   ];
