@@ -9,6 +9,7 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.views import APIView
 
 from .models import Hotel, Room, Booking, Promotion, Review, BookingStatus, PricingRule, Transaction, Favorite
+from accounts.models import Notification
 from .serializers import (
     HotelListSerializer,
     HotelDetailSerializer,
@@ -188,7 +189,25 @@ class BookingListCreateView(generics.ListCreateAPIView):
                         else:
                             discount = promotion.discount_value
                         total = max(Decimal('0'), total - discount)
-        serializer.save(user=self.request.user, total_price=total, status=BookingStatus.PENDING)
+        booking = serializer.save(user=self.request.user, total_price=total, status=BookingStatus.PENDING)
+        
+        # Notify the client
+        Notification.objects.create(
+            user=self.request.user,
+            type=Notification.NotificationType.BOOKING_CONFIRMED,
+            title="Nouvelle réservation",
+            message=f"Votre réservation pour {room.type} à {room.hotel.name} a été enregistrée.",
+            action_url=f"/profile/bookings"
+        )
+
+        # Notify the Owner
+        Notification.objects.create(
+            user=room.hotel.owner,
+            type=Notification.NotificationType.BOOKING_CONFIRMED,
+            title="Nouvelle réservation reçue",
+            message=f"Une nouvelle réservation a été effectuée pour {room.type} par {self.request.user.name}.",
+            action_url="/owner/bookings"
+        )
 
 
 class OwnerBookingListView(generics.ListAPIView):
@@ -238,6 +257,24 @@ class BookingCancelView(generics.GenericAPIView):
             return Response({'detail': 'Réservation déjà annulée.'}, status=status.HTTP_400_BAD_REQUEST)
         booking.status = BookingStatus.CANCELLED
         booking.save(update_fields=['status', 'updated_at'])
+        
+        # Notify the client
+        Notification.objects.create(
+            user=booking.user,
+            type=Notification.NotificationType.BOOKING_CANCELLED,
+            title="Réservation annulée",
+            message=f"Votre réservation pour {booking.room.type} a été annulée.",
+            action_url="/profile/bookings"
+        )
+
+        # Notify the Owner
+        Notification.objects.create(
+            user=booking.room.hotel.owner,
+            type=Notification.NotificationType.BOOKING_CANCELLED,
+            title="Réservation annulée par le client",
+            message=f"Le client {booking.user.name} a annulé sa réservation pour {booking.room.type}.",
+            action_url="/owner/bookings"
+        )
         return Response(BookingSerializer(booking).data)
 
 
@@ -266,6 +303,20 @@ class BookingStatusView(generics.GenericAPIView):
             )
         booking.status = new_status
         booking.save(update_fields=['status', 'updated_at'])
+
+        # Notify the client
+        notif_title = "Réservation confirmée" if new_status == BookingStatus.CONFIRMED else "Séjour terminé"
+        notif_msg = f"Votre séjour à {booking.room.hotel.name} est confirmé !" if new_status == BookingStatus.CONFIRMED else f"Nous espérons que vous avez apprécié votre séjour à {booking.room.hotel.name}. N'hésitez pas à laisser un avis !"
+        notif_type = Notification.NotificationType.BOOKING_CONFIRMED if new_status == BookingStatus.CONFIRMED else Notification.NotificationType.REVIEW_REQUEST
+        
+        Notification.objects.create(
+            user=booking.user,
+            type=notif_type,
+            title=notif_title,
+            message=notif_msg,
+            action_url="/profile/bookings"
+        )
+
         return Response(BookingSerializer(booking).data)
 
 
@@ -301,8 +352,8 @@ class ReviewCreateFromBookingView(generics.CreateAPIView):
             raise NotFound('Réservation non trouvée.')
         if booking.user_id != self.request.user.pk:
             raise PermissionDenied('Cette réservation ne vous appartient pas.')
-        if booking.status != BookingStatus.COMPLETED:
-            raise PermissionDenied('Vous ne pouvez noter qu\'après un séjour terminé.')
+        if booking.status not in (BookingStatus.COMPLETED, BookingStatus.CONFIRMED):
+            raise PermissionDenied('Vous ne pouvez noter qu\'une réservation confirmée ou terminée.')
         return booking
 
     def post(self, request, *args, **kwargs):

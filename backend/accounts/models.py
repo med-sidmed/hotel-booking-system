@@ -156,7 +156,7 @@ def default_invitation_expiry():
 
 class Invitation(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    email = models.EmailField(unique=True)
+    email = models.EmailField()
     token = models.UUIDField(default=uuid.uuid4, editable=False)
     role = models.CharField(max_length=10, choices=User.UserRole.choices, default=User.UserRole.USER)
     used = models.BooleanField(default=False)

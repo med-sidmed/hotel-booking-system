@@ -3,7 +3,8 @@ import { useNotifications } from '../../context/NotificationContext';
 import { bookingService } from '../../api/booking.service';
 import type { Booking } from '../../types';
 import toast from 'react-hot-toast';
-import { AlertCircle, Calendar, Check, Search, User, X, Loader2 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { AlertCircle, Calendar, Check, Search, User, X, Loader2, MessageSquare, CheckCircle } from 'lucide-react';
 import { ConfirmDialog, FormDialog } from '@/components/Dialog';
 
 export default function OwnerBookings() {
@@ -17,6 +18,8 @@ export default function OwnerBookings() {
   const [selectedBooking, setSelectedBooking] = useState<any | null>(null);
   const [pendingAction, setPendingAction] = useState<{ id: string | number; status: string } | null>(null);
   const { addNotification } = useNotifications();
+  const navigate = useNavigate();
+
 
   const fetchBookings = async () => {
     try {
@@ -269,6 +272,17 @@ export default function OwnerBookings() {
                         </button>
                       </div>
                     )}
+                    {booking.status === 'CONFIRMED' && (
+                      <div className="flex justify-end gap-2">
+                        <button
+                          onClick={() => handleStatusChangeRequest(booking.id, 'COMPLETED')}
+                          className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg bg-white border border-blue-200 transition-shadow hover:shadow-sm"
+                          title="Marquer comme Terminé"
+                        >
+                          <CheckCircle size={16} />
+                        </button>
+                      </div>
+                    )}
                   </td>
                 </tr>
               ))}
@@ -291,10 +305,16 @@ export default function OwnerBookings() {
           setSelectedBooking(null);
         }}
         onConfirm={confirmStatusChange}
-        title={pendingAction?.status === 'CONFIRMED' ? 'Confirmer la réservation' : 'Annuler la réservation'}
+        title={
+          pendingAction?.status === 'CONFIRMED' ? 'Confirmer la réservation' : 
+          pendingAction?.status === 'COMPLETED' ? 'Terminer le séjour' :
+          'Annuler la réservation'
+        }
         message={
           pendingAction?.status === 'CONFIRMED'
             ? `Voulez-vous confirmer la réservation de ${selectedBooking?.guest_name} pour "${selectedBooking?.room_type_name}" ?`
+            : pendingAction?.status === 'COMPLETED'
+            ? `Voulez-vous marquer le séjour de ${selectedBooking?.guest_name} comme étant terminé ? Cela permettra au client de laisser un avis.`
             : `Voulez-vous vraiment annuler la réservation de ${selectedBooking?.guest_name} ? Le client sera notifié.`
         }
         confirmText={pendingAction?.status === 'CONFIRMED' ? 'Confirmer' : 'Annuler la réservation'}
@@ -335,6 +355,23 @@ export default function OwnerBookings() {
                   <span className="text-sm text-gray-500">ID Utilisateur:</span>
                   <span className="text-sm font-mono text-gray-600">{selectedBooking.user}</span>
                 </div>
+                <button
+                  onClick={() => {
+                    navigate('/owner/messages', { 
+                      state: { 
+                        startWith: { 
+                          id: selectedBooking.user, 
+                          name: selectedBooking.guest_name,
+                          hotelId: selectedBooking.hotelId || selectedBooking.hotel
+                        } 
+                      } 
+                    });
+                  }}
+                  className="mt-4 w-full flex items-center justify-center gap-2 py-2 bg-[#C6A87C] text-white rounded-lg hover:bg-[#B5966A] transition-colors font-bold text-sm"
+                >
+                  <MessageSquare size={16} />
+                  Contacter le client
+                </button>
               </div>
             </div>
 

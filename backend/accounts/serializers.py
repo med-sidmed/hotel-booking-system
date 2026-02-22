@@ -16,6 +16,45 @@ class UserSerializer(serializers.ModelSerializer):
     def get_role(self, obj):
         return obj.role.upper() if obj.role else None
 
+
+class AdminUserCreateSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(write_only=True, min_length=6)
+    role = serializers.ChoiceField(choices=[('user', 'USER'), ('owner', 'OWNER'), ('admin', 'ADMIN')])
+
+    class Meta:
+        model = User
+        fields = ('id', 'email', 'name', 'password', 'role', 'phone')
+        read_only_fields = ('id',)
+
+    def create(self, validated_data):
+        password = validated_data.pop('password')
+        # Normalize role to lowercase for the DB
+        validated_data['role'] = validated_data.get('role', 'user').lower()
+        user = User.objects.create_user(
+            email=validated_data['email'],
+            name=validated_data['name'],
+            password=password,
+            role=validated_data['role'],
+            phone=validated_data.get('phone', '')
+        )
+        # Auto-create a hotel for new owners
+        if user.role == 'owner':
+            try:
+                from hotel.models import Hotel
+                Hotel.objects.create(
+                    name=f"Hôtel de {user.name}",
+                    owner=user,
+                    location="À définir",
+                    description="Bienvenue dans notre hotel.",
+                    price_per_night=0
+                )
+            except Exception as e:
+                print(f"Auto-create hotel failed: {e}")
+        return user
+
+    def to_representation(self, instance):
+        return UserSerializer(instance).data
+
 class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
 
@@ -27,7 +66,6 @@ class RegisterSerializer(serializers.ModelSerializer):
     invitation_token = serializers.CharField(write_only=True, required=False)
 
     def create(self, validated_data):
-        print(f"Registration creation attempt: {validated_data}")
         token = validated_data.pop('invitation_token', None)
         user = User.objects.create_user(
             email=validated_data['email'],
@@ -52,9 +90,13 @@ class RegisterSerializer(serializers.ModelSerializer):
         return user
 
 class NotificationSerializer(serializers.ModelSerializer):
+    userId = serializers.ReadOnlyField(source='user_id')
+    date = serializers.ReadOnlyField(source='created_at')
+    actionUrl = serializers.ReadOnlyField(source='action_url')
+
     class Meta:
         model = Notification
-        fields = '__all__'
+        fields = ['id', 'user', 'userId', 'type', 'title', 'message', 'read', 'date', 'actionUrl', 'created_at']
         read_only_fields = ('id', 'created_at')
 
 class MessageSerializer(serializers.ModelSerializer):

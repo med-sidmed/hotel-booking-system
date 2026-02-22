@@ -139,6 +139,17 @@ class Booking(models.Model):
         blank=True,
         related_name='bookings',
     )
+    payment_status = models.CharField(
+        max_length=20,
+        choices=[
+            ('PENDING', 'En attente'),
+            ('PAID', 'Payé'),
+            ('FAILED', 'Échoué'),
+            ('REFUNDED', 'Remboursé'),
+        ],
+        default='PENDING',
+    )
+    transaction_id = models.CharField(max_length=100, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

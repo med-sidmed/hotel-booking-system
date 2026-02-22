@@ -71,14 +71,15 @@ export function MessageProvider({ children }: { children: React.ReactNode }) {
     try {
       let convId = activeConversation?.id;
       
-      // If no conversation exists yet, we create it
-      if (!convId) {
+      // If no conversation exists yet or it's a temp "NEW" one, create it
+      if (!convId || convId === 'NEW') {
         const newConv = await messageService.createConversation({
           participants_ids: [user.id, receiverId],
           hotel_id: hotelId
         });
         convId = newConv.id;
         setActiveConversation(newConv);
+        await refreshConversations();
       }
 
       const newMessage = await messageService.sendMessage(convId as string, content);

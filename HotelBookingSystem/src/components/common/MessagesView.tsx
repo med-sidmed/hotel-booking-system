@@ -8,10 +8,13 @@ import {
   Video, 
   Paperclip, 
   Smile,
-  Circle
+  Circle,
+  Plus,
+  Users
 } from 'lucide-react';
 import { useMessages } from '../../context/MessageContext';
 import { useAuth } from '../../context/AuthContext';
+import { bookingService } from '../../api/booking.service';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
@@ -20,6 +23,9 @@ export default function MessagesView() {
   const { conversations, activeConversation, setActiveConversation, sendMessage, getMessages } = useMessages();
   const [messageText, setMessageText] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
+  const [showNewChatList, setShowNewChatList] = useState(false);
+  const [guests, setGuests] = useState<{ id: string | number, name: string, hotelId: string | number }[]>([]);
+  const [isLoadingGuests, setIsLoadingGuests] = useState(false);
   const location = useLocation();
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -37,8 +43,8 @@ export default function MessagesView() {
         setActiveConversation({
           id: 'NEW',
           participants: [
-            { id: user.id, name: user.name, role: 'USER' },
-            { id: state.startWith.id, name: state.startWith.name, role: 'OWNER' }
+            { id: user.id, name: user.name, role: user.role },
+            { id: state.startWith.id, name: state.startWith.name, role: user.role === 'OWNER' ? 'USER' : 'OWNER' }
           ],
           unreadCount: 0,
           hotelId: state.startWith.hotelId
@@ -46,6 +52,32 @@ export default function MessagesView() {
       }
     }
   }, [location.state, conversations, user, setActiveConversation]);
+
+  useEffect(() => {
+    if (user?.role === 'OWNER') {
+      const fetchGuests = async () => {
+        setIsLoadingGuests(true);
+        try {
+          const bookings = await bookingService.getOwnerBookings();
+          // Extract unique guests
+          const uniqueGuests = Array.from(new Set(bookings.map(b => b.user))).map(userId => {
+            const booking = bookings.find(b => b.user === userId);
+            return {
+              id: userId as string | number,
+              name: booking?.guest_name || 'Client',
+              hotelId: booking?.hotelId || (booking as any)?.hotel || ''
+            };
+          });
+          setGuests(uniqueGuests);
+        } catch (err) {
+          console.error('Failed to fetch guests:', err);
+        } finally {
+          setIsLoadingGuests(false);
+        }
+      };
+      fetchGuests();
+    }
+  }, [user]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -81,7 +113,21 @@ export default function MessagesView() {
     <div className="flex h-[calc(100vh-120px)] bg-white dark:bg-[#121212] rounded-2xl shadow-xl overflow-hidden border border-gray-100 dark:border-gray-800">
       {/* Sidebar - Conversation List */}
       <div className="w-80 border-r dark:border-gray-800 flex flex-col bg-gray-50/50 dark:bg-[#1A1A1A]">
-        <div className="p-4 border-b dark:border-gray-800">
+        <div className="p-4 border-b dark:border-gray-800 space-y-3">
+          <div className="flex items-center justify-between">
+            <h2 className="font-bold dark:text-white">Conversations</h2>
+            {user.role === 'OWNER' && (
+              <button 
+                onClick={() => setShowNewChatList(!showNewChatList)}
+                className={`p-1.5 rounded-lg transition-colors ${
+                  showNewChatList ? 'bg-[#C6A87C] text-white' : 'text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
+                }`}
+                title="Nouvelle discussion"
+              >
+                <Plus size={18} />
+              </button>
+            )}
+          </div>
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
             <input
@@ -95,7 +141,57 @@ export default function MessagesView() {
         </div>
         
         <div className="flex-1 overflow-y-auto">
-          {filteredConversations.map((conv) => {
+          {showNewChatList && user.role === 'OWNER' ? (
+            <div className="py-2">
+              <div className="px-4 py-2 flex items-center gap-2 text-xs font-bold text-gray-400 uppercase tracking-wider">
+                <Users size={12} />
+                Vos Clients
+              </div>
+              {isLoadingGuests ? (
+                <div className="px-4 py-8 text-center text-sm text-gray-500">Chargement...</div>
+              ) : guests.length === 0 ? (
+                <div className="px-4 py-8 text-center text-sm text-gray-500">Aucun client trouvé</div>
+              ) : (
+                guests.filter(g => g.name.toLowerCase().includes(searchTerm.toLowerCase())).map(guest => (
+                  <button
+                    key={guest.id}
+                    onClick={() => {
+                      setActiveConversation({
+                        id: 'NEW',
+                        participants: [
+                          { id: user.id, name: user.name, role: user.role },
+                          { id: guest.id, name: guest.name, role: 'USER' }
+                        ],
+                        unreadCount: 0,
+                        hotelId: guest.hotelId
+                      });
+                      setShowNewChatList(false);
+                    }}
+                    className="w-full p-4 flex items-center gap-3 hover:bg-gray-100 dark:hover:bg-gray-800/50 transition-colors"
+                  >
+                    <img 
+                      src={`https://ui-avatars.com/api/?name=${guest.name}&background=C6A87C&color=fff`} 
+                      alt={guest.name}
+                      className="w-10 h-10 rounded-full"
+                    />
+                    <div className="text-left truncate">
+                      <div className="font-bold text-sm dark:text-white truncate">{guest.name}</div>
+                      <div className="text-xs text-gray-400 truncate">Client</div>
+                    </div>
+                  </button>
+                ))
+              )}
+              <div className="mt-2 border-t dark:border-gray-800 pt-2">
+                <button 
+                  onClick={() => setShowNewChatList(false)}
+                  className="w-full px-4 py-2 text-xs text-[#C6A87C] hover:bg-gray-100 dark:hover:bg-gray-800/50 transition-colors text-center font-bold"
+                >
+                  Retour aux discussions
+                </button>
+              </div>
+            </div>
+          ) : (
+            filteredConversations.map((conv) => {
             const other = conv.participants.find(p => p.id !== user.id);
             const isActive = activeConversation?.id === conv.id;
             
@@ -136,7 +232,8 @@ export default function MessagesView() {
                 </div>
               </button>
             );
-          })}
+          })
+        )}
         </div>
       </div>
 

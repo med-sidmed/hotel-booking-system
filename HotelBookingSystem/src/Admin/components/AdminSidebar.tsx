@@ -40,7 +40,7 @@ export function AdminSidebar() {
     {
       title: 'Business',
       items: [
-        { name: 'Analytics', path: '/admin/analytics', icon: TrendingUp },
+        // { name: 'Analytics', path: '/admin/analytics', icon: TrendingUp },
         { name: 'Promotions', path: '/admin/promotions', icon: Tag },
         { name: 'Transactions', path: '/admin/transactions', icon: CreditCard },
       ]

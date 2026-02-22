@@ -30,7 +30,7 @@ export function OwnerSidebar() {
     { name: 'Réservations', path: '/owner/bookings', icon: CalendarDays },
     { name: 'Messages', path: '/owner/messages', icon: MessageSquare }, // Added
     { name: 'Calendrier', path: '/owner/calendar', icon: Calendar },
-    { name: 'Finances', path: '/owner/finance', icon: CreditCard },
+    // { name: 'Finances', path: '/owner/finance', icon: CreditCard },
     { name: 'Paramètres', path: '/owner/settings', icon: Settings },
   ];
 

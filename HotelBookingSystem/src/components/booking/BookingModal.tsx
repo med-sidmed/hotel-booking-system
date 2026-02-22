@@ -11,7 +11,7 @@ import {
   DialogTrigger,
 } from '../ui/dialog';
 import { Button } from '../ui/button';
-import { PaymentForm } from './PaymentForm';
+import { PromoCodeForm } from './PromoCodeForm';
 import toast from 'react-hot-toast';
 
 interface BookingModalProps {
@@ -21,7 +21,7 @@ interface BookingModalProps {
 
 export function BookingModal({ room, hotelName }: BookingModalProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [step, setStep] = useState<1 | 2 | 3>(1); // 1: Details, 2: Payment, 3: Confirmation
+  const [step, setStep] = useState<1 | 2 | 3>(1); // 1: Details, 2: Promo, 3: Confirmation
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
@@ -42,14 +42,15 @@ export function BookingModal({ room, hotelName }: BookingModalProps) {
     setStep(2);
   };
 
-  const handlePaymentSubmit = async () => {
+  const handleBookingSubmit = async (promoCode?: string) => {
     setIsSubmitting(true);
     try {
       await bookingService.createBooking({
         room: room.id,
         check_in: bookingDetails.checkIn,
         check_out: bookingDetails.checkOut,
-        guests: parseInt(bookingDetails.guests)
+        guests: parseInt(bookingDetails.guests),
+        promotion: promoCode
       });
       setStep(3);
     } catch (err: any) {
@@ -99,12 +100,12 @@ export function BookingModal({ room, hotelName }: BookingModalProps) {
         <DialogHeader>
           <DialogTitle>
             {step === 1 && `Réserver ${room.type}`}
-            {step === 2 && "Paiement sécurisé"}
+            {step === 2 && "Vérification & Code Promo"}
             {step === 3 && "Réservation Confirmée !"}
           </DialogTitle>
           <DialogDescription>
             {step === 1 && `${hotelName} - ${room.price}€ / nuit`}
-            {step === 2 && "Veuillez saisir vos coordonnées bancaires"}
+            {step === 2 && "Entrez un code promo si vous en possédez un"}
             {step === 3 && "Votre séjour a été réservé avec succès."}
           </DialogDescription>
         </DialogHeader>
@@ -164,8 +165,8 @@ export function BookingModal({ room, hotelName }: BookingModalProps) {
         )}
 
         {step === 2 && (
-          <PaymentForm 
-            onSubmit={handlePaymentSubmit}
+          <PromoCodeForm 
+            onSubmit={handleBookingSubmit}
             onBack={() => setStep(1)}
             totalPrice={calculateTotal()}
             isLoading={isSubmitting}

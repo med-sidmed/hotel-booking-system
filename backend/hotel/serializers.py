@@ -74,12 +74,14 @@ class BookingSerializer(serializers.ModelSerializer):
     hotel_name = serializers.SerializerMethodField()
     room_type_name = serializers.SerializerMethodField()
 
+    hotel_id = serializers.ReadOnlyField(source='room.hotel_id')
+
     class Meta:
         model = Booking
         fields = [
-            'id', 'user', 'guest_name', 'room', 'hotel_name', 'room_type_name',
+            'id', 'user', 'guest_name', 'room', 'hotel_id', 'hotel_name', 'room_type_name',
             'check_in', 'check_out', 'total_price',
-            'status', 'promotion', 'created_at', 'updated_at',
+            'status', 'payment_status', 'transaction_id', 'promotion', 'created_at', 'updated_at',
         ]
         read_only_fields = ['id', 'user', 'total_price', 'status', 'created_at', 'updated_at']
 
@@ -103,10 +105,16 @@ class BookingSerializer(serializers.ModelSerializer):
 
 
 class BookingCreateSerializer(serializers.ModelSerializer):
+    promotion = serializers.SlugRelatedField(
+        slug_field='code',
+        queryset=Promotion.objects.all(),
+        required=False,
+        allow_null=True
+    )
 
     class Meta:
         model = Booking
-        fields = ['id', 'room', 'check_in', 'check_out', 'promotion']
+        fields = ['id', 'room', 'check_in', 'check_out', 'promotion', 'payment_status', 'transaction_id']
 
 
 class TransactionSerializer(serializers.ModelSerializer):
@@ -139,11 +147,12 @@ class PromotionValidateSerializer(serializers.Serializer):
 class ReviewSerializer(serializers.ModelSerializer):
 
     user_email = serializers.EmailField(source='user.email', read_only=True)
+    user_name = serializers.ReadOnlyField(source='user.name')
 
     class Meta:
         model = Review
         fields = [
-            'id', 'hotel', 'user', 'user_email', 'rating', 'comment', 'photos',
+            'id', 'hotel', 'user', 'user_name', 'user_email', 'rating', 'comment', 'photos',
             'owner_response', 'verified', 'created_at', 'updated_at',
         ]
         read_only_fields = ['id', 'user', 'owner_response', 'verified', 'created_at', 'updated_at']

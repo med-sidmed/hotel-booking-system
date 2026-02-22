@@ -109,5 +109,20 @@ export const hotelService = {
 
     removeFavorite: async (favoriteId: string | number): Promise<void> => {
         await api.delete(`favorites/${favoriteId}/`);
+    },
+
+    getStats: async (): Promise<any> => {
+        const response = await api.get('stats/');
+        return response.data;
+    },
+
+    createReview: async (bookingId: string | number, data: any): Promise<Review> => {
+        const response = await api.post(`bookings/${bookingId}/review/`, data);
+        return response.data;
+    },
+
+    replyToReview: async (reviewId: string | number, text: string): Promise<any> => {
+        const response = await api.post(`reviews/${reviewId}/reply/`, { text });
+        return response.data;
     }
 };

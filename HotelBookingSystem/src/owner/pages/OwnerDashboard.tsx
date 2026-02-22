@@ -25,33 +25,25 @@ import {
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 
-const occupancyData = [
-  { name: 'Lun', taux: 65 },
-  { name: 'Mar', taux: 70 },
-  { name: 'Mer', taux: 85 },
-  { name: 'Jeu', taux: 75 },
-  { name: 'Ven', taux: 95 },
-  { name: 'Sam', taux: 100 },
-  { name: 'Dim', taux: 80 },
-];
-
 export default function OwnerDashboard() {
   const { user } = useAuth();
   const [hotelsList, setHotelsList] = useState<Hotel[]>([]);
   const [bookings, setBookings] = useState<Booking[]>([]);
+  const [statsData, setStatsData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
       setIsLoading(true);
       try {
-        // Backend should filtering hotels by owner if we are in owner mode
-        const [hotelsData, bookingsData] = await Promise.all([
+        const [hotelsData, bookingsData, rawStats] = await Promise.all([
           hotelService.getHotels(),
-          bookingService.getBookings() 
+          bookingService.getBookings(),
+          hotelService.getStats()
         ]);
         setHotelsList(hotelsData);
         setBookings(bookingsData);
+        setStatsData(rawStats);
       } catch (err) {
         console.error('Failed to fetch owner data:', err);
       } finally {
@@ -61,29 +53,43 @@ export default function OwnerDashboard() {
     fetchData();
   }, []);
 
-  const totalRooms = hotelsList.reduce((acc, curr) => acc + (curr.rooms?.length || 0), 0);
-  const activeBookings = bookings.filter(b => b.status === 'CONFIRMED').length;
-  const pendingBookings = bookings.filter(b => b.status === 'PENDING').length;
-  const cancelledBookings = bookings.filter(b => b.status === 'CANCELLED').length;
-  const totalRevenue = bookings
-    .filter(b => b.status === 'CONFIRMED' || b.status === 'COMPLETED')
-    .reduce((acc, curr) => acc + (curr.totalPrice || 0), 0);
+  // Map Backend Stats to Frontend formats
+  const kpis = statsData?.kpis || {
+    total_revenue: 0,
+    occupancy_rate: 0,
+    adr: 0,
+    rev_par: 0,
+    total_rooms: 0,
+    occupied_rooms: 0
+  };
 
-  const completionRate = bookings.length > 0 
-    ? Math.round((activeBookings / bookings.length) * 100) 
+  const statusMap: any = {
+    'CONFIRMED': { name: 'Confirmé', color: '#6B5434' },
+    'PENDING': { name: 'En attente', color: '#C6A87C' },
+    'CANCELLED': { name: 'Annulé', color: '#E8DCC8' },
+    'COMPLETED': { name: 'Terminé', color: '#4CAF50' }
+  };
+
+  const chartStatusData = (statsData?.status_distribution || []).map((item: any) => ({
+    name: statusMap[item.status]?.name || item.status,
+    value: item.count,
+    color: statusMap[item.status]?.color || '#999'
+  }));
+
+  const chartMonthlyData = (statsData?.monthly_data || []).map((item: any) => ({
+    name: item.month,
+    taux: item.revenue // or whatever metric we want to show
+  }));
+
+  const completionRate = kpis.total_rooms > 0 
+    ? Math.round((kpis.occupied_rooms / kpis.total_rooms) * 100) 
     : 0;
 
-  const statusData = [
-    { name: 'Confirmé', value: activeBookings, color: '#6B5434' },
-    { name: 'En attente', value: pendingBookings, color: '#C6A87C' },
-    { name: 'Annulé', value: cancelledBookings, color: '#E8DCC8' },
-  ];
-
-  const stats = [
-    { label: 'Vos Hôtels', value: hotelsList.length.toString(), sub: hotelsList[0]?.name || 'Aucun hôtel', icon: Building2, color: 'brown' },
-    { label: 'Total Chambres', value: totalRooms, sub: 'Opérationnel', icon: DoorOpen, color: 'blue' },
-    { label: 'Réservations', value: activeBookings, sub: `${pendingBookings} nouvelles`, icon: CalendarCheck, color: 'green' },
-    { label: 'Revenus', value: `${totalRevenue} MRU`, sub: 'Total cumulé', icon: Wallet, color: 'gold' },
+  const statsCards = [
+    { label: ' Hôtels', value: hotelsList.length.toString(), sub: hotelsList[0]?.name || 'Aucun hôtel', icon: Building2, color: 'brown' },
+    { label: 'Total Chambres', value: kpis.total_rooms, sub: 'Opérationnel', icon: DoorOpen, color: 'blue' },
+    { label: 'Taux Occupation', value: `${kpis.occupancy_rate}%`, sub: `${kpis.occupied_rooms} occupées`, icon: CalendarCheck, color: 'green' },
+    { label: 'Revenus', value: `${kpis.total_revenue.toLocaleString()} MRU`, sub: 'Total cumulé', icon: Wallet, color: 'gold' },
   ];
 
   if (isLoading) return <div className="text-center py-12">Chargement du dashboard...</div>;
@@ -103,7 +109,7 @@ export default function OwnerDashboard() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {stats.map((stat, i) => (
+        {statsCards.map((stat: any, i: number) => (
           <div key={i} className="bg-white dark:bg-[#1A1A1A] p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 overflow-hidden relative group">
             <div className="flex items-center justify-between mb-4">
               <div className={cn(
@@ -133,7 +139,7 @@ export default function OwnerDashboard() {
           </div>
           <div className="h-[300px] w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={occupancyData}>
+              <BarChart data={chartMonthlyData}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
                 <XAxis 
                   dataKey="name" 
@@ -169,7 +175,7 @@ export default function OwnerDashboard() {
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
-                  data={statusData}
+                  data={chartStatusData}
                   cx="50%"
                   cy="50%"
                   innerRadius={60}
@@ -177,7 +183,7 @@ export default function OwnerDashboard() {
                   paddingAngle={5}
                   dataKey="value"
                 >
-                  {statusData.map((entry, index) => (
+                  {chartStatusData.map((entry: any, index: number) => (
                     <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}
                 </Pie>
@@ -190,7 +196,7 @@ export default function OwnerDashboard() {
             </div>
           </div>
           <div className="mt-8 space-y-3">
-            {statusData.map((item, i) => (
+            {chartStatusData.map((item: any, i: number) => (
               <div key={i} className="p-3 rounded-xl bg-gray-50 dark:bg-gray-800/50 flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="w-2 h-2 rounded-full" style={{ backgroundColor: item.color }}></div>

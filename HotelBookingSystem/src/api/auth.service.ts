@@ -55,6 +55,11 @@ export const authService = {
         return response.data;
     },
 
+    createUser: async (data: { email: string; name: string; password: string; role: string; phone?: string }): Promise<UserProfile> => {
+        const response = await api.post('users/', { ...data, role: data.role.toLowerCase() });
+        return response.data;
+    },
+
     deleteUser: async (id: string | number): Promise<void> => {
         await api.delete(`users/${id}/`);
     },

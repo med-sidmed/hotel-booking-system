@@ -1,107 +1,67 @@
-import React, { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
+import React, { createContext, useContext, useState, type ReactNode } from 'react';
+import { hotelService } from '../api/hotel.service';
 
-export interface Review {
-  id: number;
-  hotelId: number;
-  userId: number;
-  userName: string;
-  userAvatar?: string;
-  rating: number;
-  comment: string;
-  date: string;
-  ownerResponse?: {
-    text: string;
-    date: string;
-  };
-  status: 'visible' | 'flagged' | 'hidden';
-}
+import type { Review } from '../types';
 
 interface ReviewsContextType {
-  reviews: Record<number, Review[]>;
-  addReview: (review: Omit<Review, 'id' | 'date' | 'status'>) => void;
-  getReviewsByHotelId: (hotelId: number) => Review[];
-  replyToReview: (hotelId: number, reviewId: number, responseText: string) => void;
-  moderateReview: (hotelId: number, reviewId: number, action: 'flag' | 'delete' | 'approve') => void;
+  reviews: Record<number | string, Review[]>;
+  addReview: (bookingId: string | number, rating: number, comment: string) => Promise<void>;
+  getReviewsByHotelId: (hotelId: number | string) => Review[];
+  fetchReviewsForHotel: (hotelId: number | string) => Promise<void>;
+  replyToReview: (hotelId: number | string, reviewId: number | string, responseText: string) => Promise<void>;
   getAllReviews: () => Review[];
 }
 
 const ReviewsContext = createContext<ReviewsContextType | undefined>(undefined);
 
 export const ReviewsProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [reviews, setReviews] = useState<Record<number, Review[]>>({});
+  const [reviews, setReviews] = useState<Record<number | string, Review[]>>({});
 
-  useEffect(() => {
-    const storedReviews = localStorage.getItem('hotel_reviews');
-    if (storedReviews) {
-      setReviews(JSON.parse(storedReviews));
-    } else {
-        // Mock initial reviews if none exist
-        const initialReviews: Record<number, Review[]> = {
-            1: [
-                { id: 1, hotelId: 1, userId: 101, userName: "user", rating: 5, comment: "Séjour incroyable, vue magnifique!", date: "2024-01-15", status: 'visible' },
-                { id: 2, hotelId: 1, userId: 102, userName: "Pierre Dupont", rating: 4, comment: "Très bon service, mais un peu cher.", date: "2024-02-10", status: 'visible', ownerResponse: { text: "Merci Pierre ! Nous espérons vous revoir bientôt.", date: "2024-02-11" } }
-            ],
-            2: [
-                { id: 3, hotelId: 2, userId: 103, userName: "Jean Kevin", rating: 5, comment: "Superbe expérience!", date: "2024-03-05", status: 'visible' }
-            ]
-        };
-        setReviews(initialReviews);
-        localStorage.setItem('hotel_reviews', JSON.stringify(initialReviews));
-    }
-  }, []);
-
-  const addReview = (newReviewData: Omit<Review, 'id' | 'date' | 'status'>) => {
-    const newReview: Review = {
-      ...newReviewData,
-      id: Date.now(),
-      date: new Date().toISOString().split('T')[0],
-      status: 'visible'
-    };
-
-    setReviews(prev => {
-      const hotelReviews = prev[newReview.hotelId] || [];
-      const updatedReviews = {
+  const fetchReviewsForHotel = async (hotelId: number | string) => {
+    try {
+      const data = await hotelService.getReviews(hotelId);
+      const normalizedData = data.map((r: any) => ({
+        ...r,
+        userName: r.user_name || r.userName,
+        userAvatar: r.user_avatar || r.userAvatar,
+        date: r.created_at ? new Date(r.created_at).toLocaleDateString() : r.date,
+        ownerResponse: r.owner_response ? (
+          typeof r.owner_response === 'string' 
+            ? { text: r.owner_response, date: '' }
+            : { text: r.owner_response.text, date: new Date(r.owner_response.created_at).toLocaleDateString() }
+        ) : null
+      }));
+      setReviews(prev => ({
         ...prev,
-        [newReview.hotelId]: [newReview, ...hotelReviews]
-      };
-      localStorage.setItem('hotel_reviews', JSON.stringify(updatedReviews));
-      return updatedReviews;
-    });
+        [hotelId]: normalizedData
+      }));
+    } catch (err) {
+      console.error('Failed to fetch reviews:', err);
+    }
   };
 
-  const replyToReview = (hotelId: number, reviewId: number, responseText: string) => {
-    setReviews(prev => {
-      const hotelReviews = prev[hotelId] || [];
-      const updatedHotelReviews = hotelReviews.map(review => 
-        review.id === reviewId 
-          ? { ...review, ownerResponse: { text: responseText, date: new Date().toISOString().split('T')[0] } }
-          : review
-      );
-      const updatedReviews = { ...prev, [hotelId]: updatedHotelReviews };
-      localStorage.setItem('hotel_reviews', JSON.stringify(updatedReviews));
-      return updatedReviews;
-    });
+  const addReview = async (bookingId: string | number, rating: number, comment: string) => {
+    try {
+      await hotelService.createReview(bookingId, { rating, comment });
+      // Refresh logic would need hotelId, but we can just let pages refresh
+    } catch (err) {
+      console.error('Failed to add review:', err);
+      throw err;
+    }
   };
 
-  const moderateReview = (hotelId: number, reviewId: number, action: 'flag' | 'delete' | 'approve') => {
-    setReviews(prev => {
-      const hotelReviews = prev[hotelId] || [];
-      const updatedHotelReviews = hotelReviews.map(review => {
-        if (review.id === reviewId) {
-          if (action === 'flag') return { ...review, status: 'flagged' as const };
-          if (action === 'delete') return { ...review, status: 'hidden' as const };
-          if (action === 'approve') return { ...review, status: 'visible' as const };
-        }
-        return review;
-      });
-      const updatedReviews = { ...prev, [hotelId]: updatedHotelReviews };
-      localStorage.setItem('hotel_reviews', JSON.stringify(updatedReviews));
-      return updatedReviews;
-    });
+  const replyToReview = async (hotelId: number | string, reviewId: number | string, responseText: string) => {
+    try {
+      await hotelService.replyToReview(reviewId, responseText);
+      await fetchReviewsForHotel(hotelId);
+    } catch (err) {
+      console.error('Failed to reply to review:', err);
+      throw err;
+    }
   };
 
-  const getReviewsByHotelId = (hotelId: number) => {
-    return (reviews[hotelId] || []).filter(r => r.status !== 'hidden');
+  const getReviewsByHotelId = (hotelId: number | string) => {
+    return (reviews[hotelId] || []);
   };
 
   const getAllReviews = () => {
@@ -109,7 +69,7 @@ export const ReviewsProvider: React.FC<{ children: ReactNode }> = ({ children })
   };
 
   return (
-    <ReviewsContext.Provider value={{ reviews, addReview, getReviewsByHotelId, replyToReview, moderateReview, getAllReviews }}>
+    <ReviewsContext.Provider value={{ reviews, addReview, getReviewsByHotelId, fetchReviewsForHotel, replyToReview, getAllReviews }}>
       {children}
     </ReviewsContext.Provider>
   );

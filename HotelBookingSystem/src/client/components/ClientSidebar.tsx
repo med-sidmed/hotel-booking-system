@@ -4,8 +4,7 @@ import {
   Calendar,
   Heart,
   User,
-  CreditCard,
-  LogOut,
+   LogOut,
   Star,
   Home,
   MessageSquare
@@ -26,7 +25,7 @@ export function ClientSidebar() {
     { name: 'Messages', path: '/profile/messages', icon: MessageSquare }, // Added
     { name: 'Mes Favoris', path: '/profile/favorites', icon: Heart },
     { name: 'Mes Avis', path: '/profile/reviews', icon: Star },
-    { name: 'Paiements', path: '/profile/payments', icon: CreditCard },
+    // { name: 'Paiements', path: '/profile/payments', icon: CreditCard },
     { name: 'Paramètres', path: '/profile/settings', icon: User },
     { name: 'Accueil', path: '/', icon: Home },
   ];

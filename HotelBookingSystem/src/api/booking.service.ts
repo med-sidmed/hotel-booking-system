@@ -24,7 +24,12 @@ export const bookingService = {
 
     getOwnerBookings: async (): Promise<Booking[]> => {
         const response = await api.get('bookings/owner/');
-        return response.data;
+        return response.data.map((b: any) => ({
+            ...b,
+            checkIn: b.check_in,
+            checkOut: b.check_out,
+            totalPrice: b.total_price
+        }));
     },
 
     getBookingDetails: async (id: string | number): Promise<Booking> => {

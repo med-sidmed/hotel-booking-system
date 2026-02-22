@@ -10,7 +10,7 @@ const api = axios.create({
     },
 });
 
- api.interceptors.request.use(
+api.interceptors.request.use(
     (config) => {
         const token = localStorage.getItem('access_token');
         if (token) {
@@ -29,8 +29,16 @@ api.interceptors.response.use(
     (error) => {
         // Handle global errors like 401 Unauthorized
         if (error.response?.status === 401) {
-            // Logic for logout or token refresh
             console.error('Unauthorized, redirecting to login...');
+            // Clear auth data to stop polling loops
+            localStorage.removeItem('access_token');
+            localStorage.removeItem('refresh_token');
+            localStorage.removeItem('auth_user');
+
+            // Redirect only if not already on login page to avoid loops
+            if (!window.location.pathname.includes('/login')) {
+                window.location.href = '/login';
+            }
         }
         return Promise.reject(error);
     }

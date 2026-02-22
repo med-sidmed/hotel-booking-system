@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { usePromoCodes } from '../context/PromoCodeContext';
+import { bookingService } from '../api/booking.service';
 import toast from 'react-hot-toast';
 import { cn } from '../lib/utils';
 
@@ -58,13 +59,12 @@ export default function BookingPage() {
   const taxes = basePrice * 0.15; // 15% taxes
   const total = basePrice + taxes - discount;
 
-  const handleApplyPromo = () => {
+  const handleApplyPromo = async () => {
     if (!promoCode.trim()) return;
     setIsValidating(true);
     
-    // Simulate API delay
-    setTimeout(() => {
-      const result = validatePromoCode(promoCode, basePrice);
+    try {
+      const result = await validatePromoCode(promoCode, basePrice);
       if (result.valid) {
         setAppliedPromo(result.promo);
         setDiscount(result.discount || 0);
@@ -72,18 +72,35 @@ export default function BookingPage() {
       } else {
         toast.error(result.message);
       }
+    } catch (err) {
+      toast.error('Erreur lors de la validation');
+    } finally {
       setIsValidating(false);
-    }, 800);
+    }
   };
 
-  const handleConfirmBooking = () => {
+  const handleConfirmBooking = async () => {
     toast.loading('Traitement de votre réservation...', { id: 'booking' });
     
-    // Simulate API call
-    setTimeout(() => {
-      toast.success('Réservation confirmée ! Un email de confirmation vous a été envoyé.', { id: 'booking' });
-      navigate('/profile/bookings');
-    }, 2000);
+    try {
+      const payload = {
+        room: bookingInfo.roomId,
+        check_in: dates.checkIn,
+        check_out: dates.checkOut,
+        guests: 1, // Default or could be dynamic
+        promotion: appliedPromo?.code || undefined
+      };
+      
+      await bookingService.createBooking(payload);
+      toast.success('Réservation confirmée ! Vous allez être redirigé.', { id: 'booking' });
+      
+      setTimeout(() => {
+        navigate('/profile/bookings');
+      }, 1500);
+    } catch (err: any) {
+      console.error('Booking failed:', err);
+      toast.error(err.response?.data?.error || 'Échec de la réservation. Veuillez réessayer.', { id: 'booking' });
+    }
   };
 
   const steps = [

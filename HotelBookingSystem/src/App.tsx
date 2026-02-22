@@ -4,10 +4,6 @@ import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import RoomDetailsPage from './pages/RoomDetailsPage';
 import BookingPage from './pages/BookingPage';
-import UserProfilePage from './pages/UserProfilePage';
-import HomePage from './pages/HomePage';
-import ContactPage from './pages/ContactPage';
-import MyBookingsPage from './pages/MyBookingsPage';
 import HotelDetailsPage from './pages/HotelDetailsPage';
 import NotFound from './pages/NotFound';
 
@@ -61,6 +57,8 @@ import { InvitationProvider } from './context/InvitationContext';
 import { Toaster } from 'react-hot-toast';
 import { ProtectedRoute } from './components/common/ProtectedRoute';
 import { ChatWindow } from './components/common/ChatWindow';
+import HomePage from './pages/HomePage';
+import ContactPage from './pages/ContactPage';
 
 function App() {
   return (
@@ -82,9 +80,7 @@ function App() {
                         <Route path="/login" element={<LoginPage />} />
                         <Route path="/register" element={<RegisterPage />} />
                         <Route path="/booking" element={<ProtectedRoute allowedRoles={['USER']}><BookingPage /></ProtectedRoute>} />
-                        <Route path="/profile-old" element={<UserProfilePage />} />
                         <Route path="/contact" element={<ContactPage />} />
-                        <Route path="/my-bookings" element={<MyBookingsPage />} />
                         
                         {/* Admin Routes */}
                         <Route path="/admin" element={<ProtectedRoute allowedRoles={['ADMIN']}><AdminLayout /></ProtectedRoute>}>

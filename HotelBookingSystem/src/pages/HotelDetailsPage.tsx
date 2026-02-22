@@ -7,6 +7,8 @@ import type { Hotel, Room } from "../types";
 import { useReviews } from "../context/ReviewsContext";
 import { ReviewList } from "../components/reviews/ReviewList";
 import { AddReviewDialog } from "../components/reviews/AddReviewDialog";
+import { useFavorites } from "../context/FavoritesContext";
+import { Heart } from "lucide-react";
 
 export default function HotelDetailsPage() {
   const { id } = useParams<{ id: string }>();
@@ -17,7 +19,18 @@ export default function HotelDetailsPage() {
   const [error, setError] = useState<string | null>(null);
   
   const { getReviewsByHotelId } = useReviews();
+  const { isFavorite, addFavorite, removeFavorite } = useFavorites();
   const hotelReviews = hotel ? getReviewsByHotelId(hotel.id) : [];
+  const isFav = hotel ? isFavorite(hotel.id) : false;
+
+  const toggleFavorite = async () => {
+    if (!hotel) return;
+    if (isFav) {
+      await removeFavorite(hotel.id);
+    } else {
+      await addFavorite(hotel);
+    }
+  };
 
   useEffect(() => {
     const fetchHotelData = async () => {
@@ -67,9 +80,21 @@ export default function HotelDetailsPage() {
           className="w-full h-full object-cover"
         />
         <div className="absolute inset-0 bg-black/40 flex flex-col justify-end p-8">
-          <div className="max-w-7xl mx-auto w-full text-white">
-            <h1 className="text-4xl font-bold mb-2">{hotel.name}</h1>
-            <p className="text-xl opacity-90">{hotel.location}</p>
+          <div className="max-w-7xl mx-auto w-full text-white flex justify-between items-end">
+            <div>
+              <h1 className="text-4xl font-bold mb-2">{hotel.name}</h1>
+              <p className="text-xl opacity-90">{hotel.location}</p>
+            </div>
+            <button
+              onClick={toggleFavorite}
+              className={`p-4 rounded-full backdrop-blur-md transition-all ${
+                isFav 
+                  ? "bg-red-500 text-white shadow-lg shadow-red-500/50" 
+                  : "bg-white/20 text-white hover:bg-white/30"
+              }`}
+            >
+              <Heart size={24} fill={isFav ? "currentColor" : "none"} />
+            </button>
           </div>
         </div>
       </div>

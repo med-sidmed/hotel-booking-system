@@ -6,13 +6,12 @@ from rest_framework.views import APIView
 from rest_framework.decorators import action
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
-from .models import User, Notification, Conversation, Message, Invitation
+from .models import User, Notification, Conversation, Message, Invitation, AuditLog, Setting
 from .serializers import (
-    UserSerializer, RegisterSerializer, 
+    UserSerializer, AdminUserCreateSerializer, RegisterSerializer, 
     NotificationSerializer, ConversationSerializer, MessageSerializer,
     InvitationSerializer, AuditLogSerializer, SettingSerializer
 )
-from .models import User, Notification, Conversation, Message, Invitation, AuditLog, Setting
 from .permissions import IsAdmin
 
 class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
@@ -119,12 +118,13 @@ class MessageViewSet(viewsets.ModelViewSet):
         # Create notification for other participants
         other_participants = message.conversation.participants.exclude(id=self.request.user.id)
         for participant in other_participants:
+            notif_url = "/owner/messages" if participant.role == 'owner' else "/profile/messages"
             Notification.objects.create(
                 user=participant,
                 type=Notification.NotificationType.MESSAGE,
                 title=f"Nouveau message de {self.request.user.name}",
                 message=message.content[:100],
-                action_url=f"/profile/messages?conversation={message.conversation.id}"
+                action_url=f"{notif_url}?conversation={message.conversation.id}"
             )
 
     @action(detail=True, methods=['patch'])
@@ -141,17 +141,55 @@ class UserViewSet(viewsets.ModelViewSet):
     serializer_class = UserSerializer
     permission_classes = [IsAdmin]
 
+    def get_serializer_class(self):
+        if self.action == 'create':
+            return AdminUserCreateSerializer
+        return UserSerializer
+
     def get_queryset(self):
         # Allow filtering by role if needed
         role = self.request.query_params.get('role')
         if role:
-            return self.queryset.filter(role=role)
+            return self.queryset.filter(role=role.lower())
         return self.queryset
 
 class InvitationViewSet(viewsets.ModelViewSet):
     queryset = Invitation.objects.all()
     serializer_class = InvitationSerializer
     permission_classes = [IsAdmin]
+
+    def create(self, request, *args, **kwargs):
+        email = request.data.get('email')
+        if not email:
+            return Response(
+                {'error': 'L\'email est requis pour l\'invitation.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        # Validate that the user exists and is an owner
+        try:
+            target_user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            return Response(
+                {'error': f'Aucun utilisateur trouvé avec l\'email "{email}". Vous ne pouvez inviter que des utilisateurs existants.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        if target_user.role != 'owner':
+            return Response(
+                {'error': f'L\'utilisateur "{email}" n\'est pas un propriétaire (OWNER). Rôle actuel: {target_user.role.upper()}.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        # Check for existing active invitation
+        existing = Invitation.objects.filter(email=email, used=False).first()
+        if existing:
+            if existing.expires_at and existing.expires_at < timezone.now():
+                existing.delete()  # Clean up expired
+            else:
+                return Response(
+                    {'error': f'Une invitation active existe déjà pour "{email}".'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+        return super().create(request, *args, **kwargs)
+
 
     @action(detail=False, methods=['get'], permission_classes=[permissions.AllowAny])
     def validate(self, request):
