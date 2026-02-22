@@ -50,7 +50,6 @@ export function AdminSidebar() {
       items: [
         { name: 'Calendrier Global', path: '/admin/calendar', icon: Calendar },
         { name: 'Configuration', path: '/admin/config', icon: Globe },
-        { name: 'Journaux d\'Audit', path: '/admin/audit-logs', icon: Shield }, // Added
         { name: 'Paramètres', path: '/admin/settings', icon: Settings },
       ]
     }

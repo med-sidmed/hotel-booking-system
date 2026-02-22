@@ -125,7 +125,6 @@ L'API sera accessible sur `http://localhost:8000`.
 | :--- | :--- | :--- | :--- |
 | `GET` | `/admin/stats/` | Dashboard (Revenus, Réservations, Nouveaux users) | Admin |
 | `GET` | `/admin/users/` | Gestion des utilisateurs | Admin |
-| `GET` | `/admin/audit-logs/` | Logs d'activité système | Admin |
 | `POST` | `/admin/invitations/` | Générer un lien d'invitation (Owner/Admin) | Admin |
 
 ### 9. Propriétaires (`/api/owner`)

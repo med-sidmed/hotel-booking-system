@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   Star, 
   Search, 
@@ -7,11 +7,12 @@ import {
   CheckCircle, 
   AlertTriangle,
   MessageSquare,
-  Hotel
+  Hotel as HotelIcon
 } from 'lucide-react';
 import { useReviews } from '../../context/ReviewsContext';
 import type { Review } from '../../context/ReviewsContext';
-import { hotels } from '../../data/mockData';
+import { hotelService } from '../../api/hotel.service';
+import type { Hotel } from '../../types';
 import toast from 'react-hot-toast';
 import { ConfirmDialog } from '../../components/common/ConfirmDialog';
 
@@ -19,11 +20,24 @@ export default function AdminReviews() {
   const { getAllReviews, moderateReview } = useReviews();
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState<'all' | 'flagged' | 'visible' | 'hidden'>('all');
+  const [hotels, setHotels] = useState<Hotel[]>([]);
   const [confirmAction, setConfirmAction] = useState<{
     show: boolean;
     review?: Review;
     action: 'flag' | 'delete' | 'approve';
   }>({ show: false, action: 'approve' });
+
+  useEffect(() => {
+    const fetchHotels = async () => {
+        try {
+            const data = await hotelService.getHotels();
+            setHotels(data);
+        } catch (err) {
+            console.error('Failed to fetch hotels for reviews mapping:', err);
+        }
+    };
+    fetchHotels();
+  }, []);
 
   const allReviews = getAllReviews();
 
@@ -36,7 +50,7 @@ export default function AdminReviews() {
   });
 
   const getHotelName = (hotelId: number) => {
-    return hotels.find(h => h.id === hotelId)?.name || 'Hôtel inconnu';
+    return hotels.find(h => h.id === hotelId)?.name || `Hôtel #${hotelId}`;
   };
 
   const handleModerate = () => {
@@ -134,7 +148,7 @@ export default function AdminReviews() {
                         ))}
                       </div>
                       <span className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
-                        <Hotel size={12} />
+                        <HotelIcon size={12} />
                         {getHotelName(review.hotelId)}
                       </span>
                     </div>

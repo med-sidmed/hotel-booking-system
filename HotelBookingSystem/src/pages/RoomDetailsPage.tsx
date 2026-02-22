@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
-import { hotels } from "../data/mockData";
+import { hotelService } from "../api/hotel.service";
 import { BookingModal } from '../components/booking/BookingModal';
 import { MessageSquare, Calendar as CalendarIcon, X, ChevronLeft, ChevronRight, Maximize2 } from 'lucide-react';
 import { useMessages } from '../context/MessageContext';
@@ -8,6 +8,7 @@ import { useAuth } from '../context/AuthContext';
 import { AvailabilityCalendar } from '../components/common/AvailabilityCalendar';
 import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
+import type { Hotel, Room } from '../types';
 
 export default function RoomDetailsPage() {
   const navigate = useNavigate();
@@ -17,42 +18,72 @@ export default function RoomDetailsPage() {
   const location = useLocation();
 
   const [selectedImageIdx, setSelectedImageIdx] = useState<number | null>(null);
+  const [hotel, setHotel] = useState<Hotel | null>(null);
+  const [room, setRoom] = useState<Room | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Find the hotel and then the room
-  const hotel = hotels.find((h) => h.id.toString() === hotelId);
-  const room = hotel?.rooms.find((r) => r.id.toString() === roomId);
+  useEffect(() => {
+    const fetchRoomData = async () => {
+      if (!hotelId || !roomId) return;
+      setIsLoading(true);
+      try {
+        const [hotelData, roomsData] = await Promise.all([
+          hotelService.getHotel(hotelId),
+          hotelService.getRooms(hotelId)
+        ]);
+        setHotel(hotelData);
+        const targetRoom = roomsData.find(r => r.id.toString() === roomId);
+        setRoom(targetRoom || null);
+      } catch (err) {
+        console.error('Failed to fetch room details:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchRoomData();
+  }, [hotelId, roomId]);
 
   const handleContactOwner = () => {
     if (!isAuthenticated) {
-      toast.error('Veuillez vous connecter pour contacter le propriétaire');
+      toast.error('Veuillez vous connecter pour contacter l\'établissement');
       navigate('/login', { state: { from: location } });
       return;
     }
 
-    const ownerId = 'owner-1'; 
-    const existingConv = conversations.find(c => c.participants.some(p => p.id === ownerId));
+    if (!hotel) return;
+
+    const ownerId = hotel.owner; 
+    const existingConv = conversations.find(c => 
+      c.participants.some(p => p.id === ownerId) && c.hotelId === hotel.id
+    );
     
     if (existingConv) {
       setActiveConversation(existingConv);
+      navigate('/profile/messages');
     } else {
-      setActiveConversation({
-        id: `conv-${Date.now()}`,
-        participants: [
-          { id: user!.id, name: user!.name, role: 'USER' },
-          { id: ownerId, name: hotel?.name || 'Propriétaire', role: 'OWNER' }
-        ],
-        unreadCount: 0
+      // For new conversations, we'll navigate to messages and let the context handle creation on first send
+      // Or we can pre-set a "pending" conversation style
+      navigate('/profile/messages', { 
+        state: { 
+          startWith: {
+            id: ownerId,
+            name: hotel.name,
+            hotelId: hotel.id
+          }
+        } 
       });
     }
-    
-    toast.success('Chat ouvert avec le propriétaire');
   };
+
+  if (isLoading) {
+    return <div className="min-h-screen flex items-center justify-center">Chargement...</div>;
+  }
 
   if (!hotel || !room) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center">
          <div className="flex-grow flex items-center justify-center space-x-4 flex-col">
-                  <button className="bg-[#6B5434] hover:bg-[#5B4424] text-white px-8 py-3 rounded-md font-bold transition-colors" onClick={() => navigate("/")}>Retour à la page d'accueil</button>
+                  <button className="bg-[#6B5434] hover:bg-[#5B4424] text-white px-8 py-3 rounded-md font-bold transition-colors mb-4" onClick={() => navigate("/")}>Retour à la page d'accueil</button>
           <h2 className="text-2xl font-bold text-gray-800">Chambre introuvable</h2>
         </div>
       </div>
@@ -62,14 +93,14 @@ export default function RoomDetailsPage() {
   const nextImage = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (selectedImageIdx !== null) {
-      setSelectedImageIdx((selectedImageIdx + 1) % room.images.length);
+      setSelectedImageIdx((selectedImageIdx + 1) % (room.images?.length || 1));
     }
   };
 
   const prevImage = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (selectedImageIdx !== null) {
-      setSelectedImageIdx((selectedImageIdx - 1 + room.images.length) % room.images.length);
+      setSelectedImageIdx((selectedImageIdx - 1 + (room.images?.length || 1)) % (room.images?.length || 1));
     }
   };
 
@@ -92,7 +123,7 @@ export default function RoomDetailsPage() {
               className="md:col-span-2 h-full relative cursor-pointer group overflow-hidden rounded-2xl"
               onClick={() => setSelectedImageIdx(0)}
             >
-              <img src={room.images[0]} alt={room.type} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
+              <img src={room.images?.[0] || 'https://via.placeholder.com/800x600'} alt={room.type} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
               <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors" />
               <div className="absolute bottom-6 left-6 text-white bg-black/40 backdrop-blur-md px-4 py-2 rounded-xl font-black shadow-lg">
                 {room.price}€ / nuit
@@ -102,7 +133,7 @@ export default function RoomDetailsPage() {
               </div>
             </div>
             <div className="md:col-span-2 grid grid-cols-2 gap-2 h-full">
-              {room.images.slice(1, 5).map((img, idx) => (
+              {room.images?.slice(1, 5).map((img, idx) => (
                 <div 
                   key={idx} 
                   className="relative cursor-pointer group overflow-hidden rounded-2xl"
@@ -176,7 +207,7 @@ export default function RoomDetailsPage() {
                       Contacter l'Hôtel
                     </button>
                     <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700">
-                      <BookingModal room={room} hotelName={hotel.name} />
+                      <BookingModal room={{...room, hotel_id: hotel.id}} hotelName={hotel.name} />
                     </div>
                   </div>
                </div>
@@ -241,12 +272,12 @@ export default function RoomDetailsPage() {
               onClick={(e) => e.stopPropagation()}
             >
               <img 
-                src={room.images[selectedImageIdx]} 
+                src={room.images?.[selectedImageIdx] || 'https://via.placeholder.com/800x600'} 
                 alt="Room Full View" 
                 className="max-w-full max-h-full object-contain rounded-2xl shadow-2xl" 
               />
               <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/50 backdrop-blur-md px-6 py-2 rounded-full text-white font-black text-sm border border-white/10">
-                {selectedImageIdx + 1} / {room.images.length}
+                {selectedImageIdx + 1} / {room.images?.length || 1}
               </div>
             </motion.div>
           </motion.div>

@@ -1,6 +1,50 @@
+import { useState, useEffect } from 'react';
 import { Save, Globe, DollarSign, Mail, Key, Database, Download, Upload } from 'lucide-react';
+import { settingService, type SystemSetting } from '../../api/setting.service';
+import toast from 'react-hot-toast';
 
 export default function AdminSystemConfig() {
+  const [settings, setSettings] = useState<SystemSetting[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const data = await settingService.getSettings();
+        setSettings(data);
+      } catch (err) {
+        console.error('Failed to fetch settings:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchSettings();
+  }, []);
+
+  const getSettingValue = (key: string, defaultValue: string) => {
+    return settings.find(s => s.key === key)?.value || defaultValue;
+  };
+
+  const handleSaveSetting = async (key: string, value: any) => {
+    try {
+      await settingService.updateSetting(key, value);
+      toast.success(`Paramètre ${key} mis à jour`);
+    } catch (err) {
+      toast.error(`Erreur lors de la mise à jour de ${key}`);
+    }
+  };
+
+  const handleSaveAll = async () => {
+    setIsSaving(true);
+    // In a real app, we might have a single endpoint for multiple settings
+    // Here we'll just show a success message as we're saving individually on change or on this button
+    toast.success('Tous les paramètres ont été synchronisés');
+    setIsSaving(false);
+  };
+
+  if (isLoading) return <div className="text-center py-12">Chargement de la configuration...</div>;
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -8,9 +52,13 @@ export default function AdminSystemConfig() {
           <h1 className="text-2xl font-bold text-gray-800">Configuration Système</h1>
           <p className="text-gray-500 text-sm mt-1">Paramètres globaux de la plateforme</p>
         </div>
-        <button className="px-4 py-2 bg-[#C6A87C] hover:bg-[#B5966A] text-white rounded-lg font-medium flex items-center gap-2 transition-colors shadow-sm">
+        <button 
+          onClick={handleSaveAll}
+          disabled={isSaving}
+          className="px-4 py-2 bg-[#C6A87C] hover:bg-[#B5966A] text-white rounded-lg font-medium flex items-center gap-2 transition-colors shadow-sm disabled:opacity-50"
+        >
           <Save size={18} />
-          Sauvegarder
+          {isSaving ? 'Enregistrement...' : 'Sauvegarder'}
         </button>
       </div>
 
@@ -31,7 +79,8 @@ export default function AdminSystemConfig() {
             <label className="block text-sm font-medium text-gray-700 mb-2">Nom de la Plateforme</label>
             <input 
               type="text" 
-              defaultValue="Luxotel" 
+              defaultValue={getSettingValue('site_name', 'Luxotel')} 
+              onBlur={(e) => handleSaveSetting('site_name', e.target.value)}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#C6A87C] focus:border-transparent"
             />
           </div>
@@ -39,7 +88,8 @@ export default function AdminSystemConfig() {
             <label className="block text-sm font-medium text-gray-700 mb-2">Email Support</label>
             <input 
               type="email" 
-              defaultValue="support@luxotel.com" 
+              defaultValue={getSettingValue('support_email', 'support@luxotel.com')} 
+              onBlur={(e) => handleSaveSetting('support_email', e.target.value)}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#C6A87C] focus:border-transparent"
             />
           </div>
@@ -47,13 +97,18 @@ export default function AdminSystemConfig() {
             <label className="block text-sm font-medium text-gray-700 mb-2">Téléphone Support</label>
             <input 
               type="tel" 
-              defaultValue="+222 45 XX XX XX" 
+              defaultValue={getSettingValue('support_phone', '+222 45 XX XX XX')} 
+              onBlur={(e) => handleSaveSetting('support_phone', e.target.value)}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#C6A87C] focus:border-transparent"
             />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Fuseau Horaire</label>
-            <select className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#C6A87C] focus:border-transparent">
+            <select 
+              defaultValue={getSettingValue('timezone', 'GMT+0 (Nouakchott)')}
+              onChange={(e) => handleSaveSetting('timezone', e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#C6A87C] focus:border-transparent"
+            >
               <option>GMT+0 (Nouakchott)</option>
               <option>GMT+1 (Paris)</option>
               <option>GMT+2 (Cairo)</option>

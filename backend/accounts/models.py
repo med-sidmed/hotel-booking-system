@@ -1,5 +1,7 @@
 import uuid
 from django.db import models
+from django.utils import timezone
+from datetime import timedelta
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 
 
@@ -53,6 +55,42 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     def __str__(self):
         return self.email
+
+
+class AuditLog(models.Model):
+    class Category(models.TextChoices):
+        AUTH = 'AUTH'
+        BOOKING = 'BOOKING'
+        HOTEL = 'HOTEL'
+        ROOM = 'ROOM'
+        REVIEW = 'REVIEW'
+        SYSTEM = 'SYSTEM'
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='audit_logs')
+    user_name = models.CharField(max_length=255)  # Snapshot of user name
+    user_role = models.CharField(max_length=50) # Snapshot of user role
+    action = models.CharField(max_length=255)
+    category = models.CharField(max_length=20, choices=Category.choices)
+    details = models.TextField()
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-timestamp']
+
+    def __str__(self):
+        return f"{self.user_name} - {self.action} ({self.timestamp})"
+
+
+class Setting(models.Model):
+    key = models.CharField(max_length=100, primary_key=True)
+    value = models.JSONField()
+    description = models.TextField(blank=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.key
 
     
 
@@ -112,6 +150,9 @@ class Message(models.Model):
     def __str__(self):
         return f"Message from {self.sender.email} at {self.created_at}"
 
+def default_invitation_expiry():
+    return timezone.now() + timedelta(days=7)
+
 
 class Invitation(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -120,7 +161,8 @@ class Invitation(models.Model):
     role = models.CharField(max_length=10, choices=User.UserRole.choices, default=User.UserRole.USER)
     used = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
-    expires_at = models.DateTimeField()
+    expires_at = models.DateTimeField(default=default_invitation_expiry, null=True, blank=True)
+    hotel_name = models.CharField(max_length=255, null=True, blank=True)
     
     def validate(self):
         from django.utils import timezone

@@ -1,26 +1,47 @@
-import { useState } from 'react';
-import { mockBookings } from '../../data/mockData';
+import { useState, useEffect } from 'react';
+import { bookingService } from '../../api/booking.service';
+import type { Booking } from '../../types';
 import { Download, Calendar, MapPin, TrendingUp, CheckCircle, Clock, XCircle } from 'lucide-react';
 
 export default function MyBookings() {
-  const userId = 101; // Mock logged-in user
+  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState('ALL');
   
-  const userBookings = mockBookings.filter(b => b.userId === userId);
-  const filteredBookings = userBookings.filter(b => 
+  useEffect(() => {
+    const fetchBookings = async () => {
+      setIsLoading(true);
+      try {
+        const data = await bookingService.getBookings();
+        setBookings(data);
+      } catch (err) {
+        console.error('Failed to fetch bookings:', err);
+        setError('Impossible de récupérer vos réservations.');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchBookings();
+  }, []);
+
+  const filteredBookings = bookings.filter(b => 
     filter === 'ALL' || b.status === filter
   );
 
   // Calculate statistics
   const stats = {
-    total: userBookings.length,
-    confirmed: userBookings.filter(b => b.status === 'CONFIRMED').length,
-    pending: userBookings.filter(b => b.status === 'PENDING').length,
-    cancelled: userBookings.filter(b => b.status === 'CANCELLED').length,
-    totalSpent: userBookings
+    total: bookings.length,
+    confirmed: bookings.filter(b => b.status === 'CONFIRMED').length,
+    pending: bookings.filter(b => b.status === 'PENDING').length,
+    cancelled: bookings.filter(b => b.status === 'CANCELLED').length,
+    totalSpent: bookings
       .filter(b => b.status === 'CONFIRMED' || b.status === 'COMPLETED')
-      .reduce((acc, curr) => acc + curr.totalPrice, 0)
+      .reduce((acc, curr) => acc + (curr.totalPrice || 0), 0)
   };
+
+  if (isLoading) return <div className="text-center py-12">Chargement de vos réservations...</div>;
+  if (error) return <div className="text-center py-12 text-red-500">{error}</div>;
 
   return (
     <div className="space-y-6">
@@ -126,12 +147,12 @@ export default function MyBookings() {
 
       {/* Bookings List */}
       <div className="grid grid-cols-1 gap-4">
-        {filteredBookings.map((booking) => (
+        {filteredBookings.map((booking: any) => (
           <div key={booking.id} className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-all hover:border-[#C6A87C]/30">
             <div className="flex justify-between items-start">
               <div className="flex-1">
                 <div className="flex items-center gap-3 mb-3">
-                  <h3 className="text-lg font-bold text-gray-800">{booking.roomType}</h3>
+                  <h3 className="text-lg font-bold text-gray-800">{booking.room_type_name || "Chambre"}</h3>
                   <span className={`px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1 ${
                     booking.status === 'CONFIRMED' ? 'bg-green-100 text-green-700' :
                     booking.status === 'PENDING' ? 'bg-yellow-100 text-yellow-700' :
@@ -148,7 +169,7 @@ export default function MyBookings() {
                 <div className="space-y-2 mb-4">
                   <div className="flex items-center text-gray-600 text-sm">
                     <MapPin size={16} className="mr-2 text-gray-400" />
-                    <span>Hôtel Élégance Royal, Nouakchott</span>
+                    <span>{booking.hotel_name || "Hôtel Luxotel"}</span>
                   </div>
 
                   <div className="flex items-center text-gray-600 text-sm">
@@ -169,7 +190,7 @@ export default function MyBookings() {
                   </div>
                   <div>
                     <p className="text-xs text-gray-500">Date Réservation</p>
-                    <p className="text-sm font-medium text-gray-700">{booking.date}</p>
+                    <p className="text-sm font-medium text-gray-700">{new Date(booking.created_at).toLocaleDateString()}</p>
                   </div>
                   <div>
                     <p className="text-xs text-gray-500">Référence</p>
@@ -184,13 +205,20 @@ export default function MyBookings() {
                   Facture
                 </button>
                 {booking.status === 'CONFIRMED' && (
-                  <button className="px-4 py-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg font-medium text-sm transition-colors border border-red-200">
+                  <button 
+                    onClick={async () => {
+                      if (window.confirm('Voulez-vous vraiment annuler cette réservation ?')) {
+                        try {
+                          await bookingService.cancelBooking(booking.id);
+                          setBookings(prev => prev.map(b => b.id === booking.id ? { ...b, status: 'CANCELLED' } : b));
+                        } catch (err) {
+                          alert('Erreur lors de l\'annulation');
+                        }
+                      }
+                    }}
+                    className="px-4 py-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg font-medium text-sm transition-colors border border-red-200"
+                  >
                     Annuler
-                  </button>
-                )}
-                {booking.status === 'COMPLETED' && (
-                  <button className="px-4 py-2 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-lg font-medium text-sm transition-colors border border-blue-200">
-                    Laisser un Avis
                   </button>
                 )}
               </div>

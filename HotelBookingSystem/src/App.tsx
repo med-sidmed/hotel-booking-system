@@ -9,16 +9,15 @@ import HomePage from './pages/HomePage';
 import ContactPage from './pages/ContactPage';
 import MyBookingsPage from './pages/MyBookingsPage';
 import HotelDetailsPage from './pages/HotelDetailsPage';
+import NotFound from './pages/NotFound';
 
 import { FavoritesProvider } from './context/FavoritesContext';
 import { ReviewsProvider } from './context/ReviewsContext';
-import { AuditLogProvider } from './context/AuditLogContext';
 
 // Admin Imports
 import AdminLayout from './Admin/layouts/AdminLayout';
 import AdminDashboard from './Admin/pages/AdminDashboard';
-import AdminAuditLogs from './Admin/pages/AdminAuditLogs';
-
+ 
 import AdminUsers from './Admin/pages/AdminUsers';
 import AdminSettings from './Admin/pages/AdminSettings';
 import AdminHotels from './Admin/pages/AdminHotels';
@@ -67,8 +66,7 @@ function App() {
   return (
     <ThemeProvider>
       <AuthProvider>
-        <AuditLogProvider>
-          <PromoCodeProvider>
+        <PromoCodeProvider>
             <InvitationProvider>
               <MessageProvider>
               <FavoritesProvider>
@@ -99,7 +97,6 @@ function App() {
                           <Route path="transactions" element={<AdminTransactions />} />
                           <Route path="reviews" element={<AdminReviews />} />
                           <Route path="calendar" element={<AdminCalendar />} />
-                          <Route path="audit-logs" element={<AdminAuditLogs />} />
                           <Route path="config" element={<AdminSystemConfig />} />
                           <Route path="settings" element={<AdminSettings />} />
                         </Route>
@@ -130,6 +127,8 @@ function App() {
                           <Route path="settings" element={<ClientSettings />} />
                         </Route>
                         
+                        <Route path="*" element={<NotFound />} />
+                        
                       </Routes>        
                     </BrowserRouter>
                   </NotificationProvider>
@@ -139,7 +138,6 @@ function App() {
             </MessageProvider>
           </InvitationProvider>
           </PromoCodeProvider>
-        </AuditLogProvider>
       </AuthProvider>
     </ThemeProvider>
   );

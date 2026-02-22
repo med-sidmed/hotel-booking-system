@@ -1,55 +1,80 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import type { UserProfile as User } from '../../types';
 import { useInvitations } from '../../context/InvitationContext';
+import { authService } from '../../api/auth.service';
 import toast from 'react-hot-toast';
 
-// Mock Users Data
-const mockUsers: User[] = [
-    { id: 1, name: "Sophie Martin", email: "sophie.martin@example.com", phone: "+33 6 12 34 56 78", password: "hash", role: "USER", avatar: "https://i.pravatar.cc/150?u=sophie" },
-    { id: 2, name: "Admin Principal", email: "admin@pakvista.com", phone: "+33 6 98 76 54 32", password: "hash", role: "ADMIN", avatar: "https://i.pravatar.cc/150?u=admin" },
-    { id: 3, name: "Pierre Dupont", email: "pierre.dupont@example.com", phone: "+33 6 11 22 33 44", password: "hash", role: "USER" },
-    { id: 4, name: "Marie Curie", email: "marie.curie@example.com", phone: "+33 6 55 44 33 22", password: "hash", role: "USER", avatar: "https://i.pravatar.cc/150?u=marie" },
-];
-
 export default function AdminUsers() {
-  const [users, setUsers] = useState<User[]>(mockUsers);
+  const [users, setUsers] = useState<User[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState<'USERS' | 'INVITATIONS'>('USERS');
-  const { invitations, createInvitation, deleteInvitation } = useInvitations();
+  const { invitations, createInvitation, deleteInvitation, isLoading: invitationsLoading } = useInvitations();
   const [inviteRole, setInviteRole] = useState<'ADMIN' | 'OWNER'>('OWNER');
   const [inviteEmail, setInviteEmail] = useState('');
+  const [hotelName, setHotelName] = useState('');
+
+  const fetchUsers = async () => {
+    setIsLoading(true);
+    try {
+      const data = await authService.getUsers();
+      setUsers(data);
+    } catch (err) {
+      console.error('Failed to fetch users:', err);
+      toast.error('Erreur lors du chargement des utilisateurs');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === 'USERS') {
+      fetchUsers();
+    }
+  }, [activeTab]);
 
   const filteredUsers = users.filter(user => 
     user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     user.email.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleDelete = (id: number | string) => {
+  const handleDelete = async (id: number | string) => {
       if (confirm('Êtes-vous sûr de vouloir supprimer cet utilisateur ?')) {
-          setUsers(users.filter(u => u.id !== id));
-          toast.success('Utilisateur supprimé');
+          try {
+              await authService.deleteUser(id);
+              setUsers(users.filter(u => u.id !== id));
+              toast.success('Utilisateur supprimé');
+          } catch (err) {
+              toast.error('Erreur lors de la suppression');
+          }
       }
   };
 
-  const toggleRole = (id: number | string) => {
-      setUsers(users.map(u => {
-          if (u.id === id) {
-              return { ...u, role: u.role === 'ADMIN' ? 'USER' : 'ADMIN' };
-          }
-          return u;
-      }));
-      toast.success('Rôle mis à jour');
+  const toggleRole = async (user: User) => {
+      const newRole = user.role === 'ADMIN' ? 'USER' : 'ADMIN';
+      try {
+          const updated = await authService.updateUser(user.id, { role: newRole });
+          setUsers(users.map(u => u.id === user.id ? updated : u));
+          toast.success('Rôle mis à jour');
+      } catch (err) {
+          toast.error('Erreur lors de la mise à jour du rôle');
+      }
   };
 
-  const handleGenerateInvite = (e: React.FormEvent) => {
+  const handleGenerateInvite = async (e: React.FormEvent) => {
       e.preventDefault();
-      const invite = createInvitation(inviteRole, inviteEmail || undefined);
-      const inviteUrl = `${window.location.origin}/register?token=${invite.token}`;
-      
-      // Copy to clipboard
-      navigator.clipboard.writeText(inviteUrl);
-      toast.success('Invitation générée et lien copié !');
-      setInviteEmail('');
+      try {
+          const invite = await createInvitation(inviteRole, inviteEmail || undefined, inviteRole === 'OWNER' ? hotelName : undefined);
+          const inviteUrl = `${window.location.origin}/register?token=${invite.token}`;
+          
+          // Copy to clipboard
+          navigator.clipboard.writeText(inviteUrl);
+          toast.success('Invitation générée et lien copié !');
+          setInviteEmail('');
+          setHotelName('');
+      } catch (err) {
+          // Toast handled in context
+      }
   };
 
   const copyInviteLink = (token: string) => {
@@ -57,6 +82,8 @@ export default function AdminUsers() {
       navigator.clipboard.writeText(inviteUrl);
       toast.success('Lien copié dans le presse-papier');
   };
+
+  if (isLoading && activeTab === 'USERS') return <div className="text-center py-12">Chargement des utilisateurs...</div>;
 
   return (
     <div className="space-y-6">
@@ -80,7 +107,6 @@ export default function AdminUsers() {
 
        {activeTab === 'USERS' ? (
          <>
-           {/* Search Filter */}
            <div className="bg-white p-4 rounded-lg shadow-sm border border-orange-100 flex items-center">
               <svg className="w-5 h-5 text-gray-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
               <input 
@@ -110,7 +136,7 @@ export default function AdminUsers() {
                           <div className="flex items-center">
                               <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden mr-3">
                                   {user.avatar ? (
-                                      <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
+                                      <img src={user.avatar.startsWith('http') ? user.avatar : `${import.meta.env.VITE_API_URL}${user.avatar}`} alt={user.name} className="w-full h-full object-cover" />
                                   ) : (
                                       <span className="text-gray-500 font-bold">{user.name.charAt(0)}</span>
                                   )}
@@ -132,7 +158,7 @@ export default function AdminUsers() {
                       </td>
                       <td className="px-6 py-4 text-right space-x-2">
                         <button 
-                            onClick={() => toggleRole(user.id)}
+                            onClick={() => toggleRole(user)}
                             className="text-gray-500 hover:text-[#6B5434] font-medium text-xs border border-gray-300 px-2 py-1 rounded transition-colors"
                         >
                             {user.role === 'ADMIN' ? 'Rétrograder' : 'Promouvoir'}
@@ -158,7 +184,6 @@ export default function AdminUsers() {
          </>
        ) : (
          <div className="space-y-6">
-            {/* Generate Invitation Form */}
             <div className="bg-white p-6 rounded-xl shadow-sm border border-orange-100">
                 <h3 className="text-lg font-semibold text-gray-800 mb-4">Générer une Invitation</h3>
                 <form onSubmit={handleGenerateInvite} className="flex flex-col md:flex-row gap-4">
@@ -183,6 +208,18 @@ export default function AdminUsers() {
                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-[#6B5434] focus:border-[#6B5434]"
                         />
                     </div>
+                    {inviteRole === 'OWNER' && (
+                        <div className="flex-1">
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Nom de l'Hôtel</label>
+                            <input 
+                                type="text" 
+                                placeholder="ex: Luxotel Sea View"
+                                value={hotelName}
+                                onChange={(e) => setHotelName(e.target.value)}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-[#6B5434] focus:border-[#6B5434]"
+                            />
+                        </div>
+                    )}
                     <div className="flex items-end">
                         <button 
                             type="submit"
@@ -195,7 +232,6 @@ export default function AdminUsers() {
                 <p className="mt-2 text-xs text-gray-500">Le lien sera automatiquement copié dans votre presse-papier.</p>
             </div>
 
-            {/* Invitations List */}
             <div className="bg-white rounded-xl shadow-sm border border-orange-100 overflow-hidden">
                 <div className="overflow-x-auto">
                     <table className="w-full text-left text-sm text-gray-600">
@@ -203,6 +239,7 @@ export default function AdminUsers() {
                             <tr>
                                 <th className="px-6 py-4">Rôle</th>
                                 <th className="px-6 py-4">Destinataire</th>
+                                <th className="px-6 py-4">Hôtel</th>
                                 <th className="px-6 py-4">Expiration</th>
                                 <th className="px-6 py-4">Statut</th>
                                 <th className="px-6 py-4 text-right">Actions</th>
@@ -211,7 +248,9 @@ export default function AdminUsers() {
                         <tbody className="divide-y divide-gray-100">
                             {invitations.length === 0 ? (
                                 <tr>
-                                    <td colSpan={5} className="px-6 py-8 text-center text-gray-500">Aucune invitation active.</td>
+                                    <td colSpan={5} className="px-6 py-8 text-center text-gray-500">
+                                      {invitationsLoading ? "Chargement..." : "Aucune invitation active."}
+                                    </td>
                                 </tr>
                             ) : (
                                 [...invitations].reverse().map((inv) => (
@@ -222,8 +261,9 @@ export default function AdminUsers() {
                                             </span>
                                         </td>
                                         <td className="px-6 py-4">{inv.email || "Tous"}</td>
+                                        <td className="px-6 py-4 text-sm italic">{inv.hotelName || "-"}</td>
                                         <td className="px-6 py-4 text-xs">
-                                            {new Date(inv.expiresAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })}
+                                            {inv.expiresAt ? new Date(inv.expiresAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' }) : "Indéfinie"}
                                         </td>
                                         <td className="px-6 py-4">
                                             {inv.used ? (
@@ -231,14 +271,14 @@ export default function AdminUsers() {
                                                     <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>
                                                     Utilisé
                                                 </span>
-                                            ) : new Date(inv.expiresAt) < new Date() ? (
+                                            ) : (inv.expiresAt && new Date(inv.expiresAt) < new Date()) ? (
                                                 <span className="text-red-400 italic">Expiré</span>
                                             ) : (
                                                 <span className="text-green-600 font-medium">Actif</span>
                                             )}
                                         </td>
                                         <td className="px-6 py-4 text-right space-x-3">
-                                            {!inv.used && new Date(inv.expiresAt) >= new Date() && (
+                                            {!inv.used && (!inv.expiresAt || new Date(inv.expiresAt) >= new Date()) && (
                                                 <button 
                                                     onClick={() => copyInviteLink(inv.token)}
                                                     className="text-[#6B5434] hover:underline text-xs font-medium"

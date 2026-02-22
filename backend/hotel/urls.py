@@ -14,19 +14,24 @@ from .views import (
     HotelReviewListView,
     ReviewCreateFromBookingView,
     ReviewReplyView,
+    MyReviewListView,
     PromotionListCreateView,
     PromotionValidateView,
     PricingRuleViewSet,
-    TransactionViewSet
+    TransactionViewSet,
+    StatsView,
+    FavoriteViewSet
 )
 
 router = DefaultRouter()
 router.register(r'hotels', HotelViewSet, basename='hotel')
 router.register(r'pricing-rules', PricingRuleViewSet, basename='pricingrule')
 router.register(r'transactions', TransactionViewSet, basename='transaction')
+router.register(r'favorites', FavoriteViewSet, basename='favorite')
 
 urlpatterns = [
     path('', include(router.urls)),
+    path('stats/', StatsView.as_view(), name='admin-stats'),
     # Chambres
     path('hotels/<uuid:hotel_id>/rooms/', HotelRoomListCreateView.as_view(), name='hotel-rooms'),
     path('rooms/<uuid:id>/', RoomDetailView.as_view(), name='room-detail'),
@@ -38,6 +43,7 @@ urlpatterns = [
     path('bookings/<uuid:id>/status/', BookingStatusView.as_view(), name='booking-status'),
     # Avis
     path('hotels/<uuid:hotel_id>/reviews/', HotelReviewListView.as_view(), name='hotel-reviews'),
+    path('reviews/mine/', MyReviewListView.as_view(), name='my-reviews'),
     path('bookings/<uuid:id>/review/', ReviewCreateFromBookingView.as_view(), name='booking-review'),
     path('reviews/<uuid:id>/reply/', ReviewReplyView.as_view(), name='review-reply'),
     # Promotions

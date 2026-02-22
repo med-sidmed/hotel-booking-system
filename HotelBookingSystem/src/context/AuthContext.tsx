@@ -1,11 +1,13 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
 import type { UserProfile } from '../types';
+import { authService } from '../api/auth.service';
 
 interface AuthContextType {
   user: UserProfile | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (email: string, role: 'ADMIN' | 'OWNER' | 'USER') => Promise<void>;
+  login: (email: string, password: string) => Promise<UserProfile>;
+  register: (data: any) => Promise<any>;
   logout: () => void;
   updateUser: (data: Partial<UserProfile>) => void;
 }
@@ -17,49 +19,61 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Check local storage for existing session
-    const storedUser = localStorage.getItem('auth_user');
-    if (storedUser) {
-      try {
-        setUser(JSON.parse(storedUser));
-      } catch (e) {
-        console.error('Failed to parse stored user', e);
-        localStorage.removeItem('auth_user');
+    const initAuth = async () => {
+      const token = localStorage.getItem('access_token');
+      if (token) {
+        try {
+          const userData = await authService.getMe();
+          setUser(userData);
+          localStorage.setItem('auth_user', JSON.stringify(userData));
+        } catch (e) {
+          console.error('Failed to restore session', e);
+          authService.logout();
+        }
       }
-    }
-    setIsLoading(false);
+      setIsLoading(false);
+    };
+    initAuth();
   }, []);
 
-  const login = async (email: string, role: 'ADMIN' | 'OWNER' | 'USER') => {
+  const login = async (email: string, password: string) => {
     setIsLoading(true);
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 800));
-    
-    const mockUser: UserProfile = {
-      id: role === 'ADMIN' ? 'admin-1' : role === 'OWNER' ? 'owner-1' : 'client-1',
-      name: role === 'ADMIN' ? 'Administrateur' : role === 'OWNER' ? 'Propriétaire Hôtel' : 'Sophie Martin',
-      email: email,
-      password: 'password', // Not used for security but for mock consistency
-      role: role,
-      avatar: `https://i.pravatar.cc/150?u=${email}`,
-      phone: '+222 40 00 00 00',
-      preferences: {
-        language: 'fr',
-        currency: 'MRU',
-        notifications: true
-      }
-    };
-
-    setUser(mockUser);
-    localStorage.setItem('auth_user', JSON.stringify(mockUser));
-    setIsLoading(false);
+    try {
+      await authService.login(email, password);
+      const userData = await authService.getMe();
+      setUser(userData);
+      localStorage.setItem('auth_user', JSON.stringify(userData));
+      return userData;
+    } catch (error) {
+      console.error('Login failed:', error);
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  const register = async (data: any) => {
+    setIsLoading(true);
+    try {
+      const result = await authService.register(data);
+      return result;
+    } catch (error) {
+      console.error('Registration failed:', error);
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const logout = () => {
-    setUser(null);
-    localStorage.removeItem('auth_user');
-    // Clear storage to force a clean state
-    window.location.href = '/';
+  const logout = async () => {
+    try {
+      await authService.logout();
+    } catch (e) {
+      console.error('Logout error', e);
+    } finally {
+      setUser(null);
+      window.location.href = '/login';
+    }
   };
 
   const updateUser = (data: Partial<UserProfile>) => {
@@ -76,6 +90,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isAuthenticated: !!user, 
       isLoading, 
       login, 
+      register,
       logout,
       updateUser
     }}>

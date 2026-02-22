@@ -1,4 +1,8 @@
-import { hotels, mockBookings } from '../../data/mockData';
+import { useState, useEffect } from 'react';
+import { hotelService } from '../../api/hotel.service';
+import { bookingService } from '../../api/booking.service';
+import { useAuth } from '../../context/AuthContext';
+import type { Hotel, Booking } from '../../types';
 import { 
   BarChart, 
   Bar, 
@@ -8,7 +12,7 @@ import {
   Tooltip, 
   ResponsiveContainer,
   PieChart,
-  Pie,
+  Pie, 
   Cell,
 } from 'recharts';
 import { 
@@ -32,20 +36,41 @@ const occupancyData = [
 ];
 
 export default function OwnerDashboard() {
-  const myHotelId = 1; 
-  const myHotel = hotels.find(h => h.id === myHotelId);
-  const myBookings = mockBookings.filter(b => b.hotelId === myHotelId);
+  const { user } = useAuth();
+  const [hotelsList, setHotelsList] = useState<Hotel[]>([]);
+  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const totalRooms = myHotel?.rooms.length || 0;
-  const activeBookings = myBookings.filter(b => b.status === 'CONFIRMED').length;
-  const pendingBookings = myBookings.filter(b => b.status === 'PENDING').length;
-  const cancelledBookings = myBookings.filter(b => b.status === 'CANCELLED').length;
-  const totalRevenue = myBookings
-    .filter(b => b.status === 'CONFIRMED')
-    .reduce((acc, curr) => acc + curr.totalPrice, 0);
+  useEffect(() => {
+    const fetchData = async () => {
+      setIsLoading(true);
+      try {
+        // Backend should filtering hotels by owner if we are in owner mode
+        const [hotelsData, bookingsData] = await Promise.all([
+          hotelService.getHotels(),
+          bookingService.getBookings() 
+        ]);
+        setHotelsList(hotelsData);
+        setBookings(bookingsData);
+      } catch (err) {
+        console.error('Failed to fetch owner data:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
 
-  const completionRate = myBookings.length > 0 
-    ? Math.round((activeBookings / myBookings.length) * 100) 
+  const totalRooms = hotelsList.reduce((acc, curr) => acc + (curr.rooms?.length || 0), 0);
+  const activeBookings = bookings.filter(b => b.status === 'CONFIRMED').length;
+  const pendingBookings = bookings.filter(b => b.status === 'PENDING').length;
+  const cancelledBookings = bookings.filter(b => b.status === 'CANCELLED').length;
+  const totalRevenue = bookings
+    .filter(b => b.status === 'CONFIRMED' || b.status === 'COMPLETED')
+    .reduce((acc, curr) => acc + (curr.totalPrice || 0), 0);
+
+  const completionRate = bookings.length > 0 
+    ? Math.round((activeBookings / bookings.length) * 100) 
     : 0;
 
   const statusData = [
@@ -55,18 +80,20 @@ export default function OwnerDashboard() {
   ];
 
   const stats = [
-    { label: 'Vos Hôtels', value: '1', sub: 'Hôtel Élégance Royal', icon: Building2, color: 'brown' },
+    { label: 'Vos Hôtels', value: hotelsList.length.toString(), sub: hotelsList[0]?.name || 'Aucun hôtel', icon: Building2, color: 'brown' },
     { label: 'Total Chambres', value: totalRooms, sub: 'Opérationnel', icon: DoorOpen, color: 'blue' },
     { label: 'Réservations', value: activeBookings, sub: `${pendingBookings} nouvelles`, icon: CalendarCheck, color: 'green' },
-    { label: 'Revenus', value: `${totalRevenue} MRU`, sub: 'Ce mois', icon: Wallet, color: 'gold' },
+    { label: 'Revenus', value: `${totalRevenue} MRU`, sub: 'Total cumulé', icon: Wallet, color: 'gold' },
   ];
+
+  if (isLoading) return <div className="text-center py-12">Chargement du dashboard...</div>;
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
       <div className="flex justify-between items-center mb-2">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Tableau de Bord Propriétaire</h1>
-          <p className="text-sm text-gray-500">Gérez votre établissement et vos revenus</p>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Tableau de Bord Manager</h1>
+          <p className="text-sm text-gray-500">Gérez votre établissement et vos revenus ({user?.name})</p>
         </div>
         <div className="flex gap-2">
           <button className="px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-sm font-bold shadow-sm flex items-center gap-2">
@@ -187,25 +214,28 @@ export default function OwnerDashboard() {
               <tr className="bg-gray-50 dark:bg-gray-800/50">
                 <th className="px-6 py-3 text-xs font-bold text-gray-500 uppercase">Client</th>
                 <th className="px-6 py-3 text-xs font-bold text-gray-500 uppercase">Chambre</th>
-                <th className="px-6 py-3 text-xs font-bold text-gray-500 uppercase">Date</th>
+                <th className="px-6 py-3 text-xs font-bold text-gray-500 uppercase">Hôtel</th>
+                <th className="px-6 py-3 text-xs font-bold text-gray-500 uppercase font-mono">ID</th>
                 <th className="px-6 py-3 text-xs font-bold text-gray-500 uppercase">Montant</th>
                 <th className="px-6 py-3 text-xs font-bold text-gray-500 uppercase text-center">Statut</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50 dark:divide-gray-800">
-              {myBookings.slice(0, 5).map((booking) => (
+              {bookings.slice(0, 10).map((booking: any) => (
                 <tr key={booking.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
                   <td className="px-6 py-4">
-                    <span className="font-bold text-gray-900 dark:text-white">{booking.userName}</span>
+                    <span className="font-bold text-gray-900 dark:text-white">{booking.user_name || "Client"}</span>
                   </td>
-                  <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-400 font-medium">{booking.roomType}</td>
-                  <td className="px-6 py-4 text-sm text-gray-500">{booking.date}</td>
+                  <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-400 font-medium">{booking.room_type_name || "Chambre"}</td>
+                  <td className="px-6 py-4 text-sm text-gray-500">{booking.hotel_name || "Hôtel"}</td>
+                  <td className="px-6 py-4 text-sm font-mono text-gray-400">{booking.id.toString().slice(0, 8)}...</td>
                   <td className="px-6 py-4 font-black text-[#C6A87C]">{booking.totalPrice} MRU</td>
                   <td className="px-6 py-4 text-center">
                     <span className={cn(
                       "px-3 py-1 rounded-full text-[10px] font-black uppercase",
                       booking.status === 'CONFIRMED' ? "bg-green-100 text-green-700" :
                       booking.status === 'PENDING' ? "bg-yellow-100 text-yellow-700" :
+                      booking.status === 'COMPLETED' ? "bg-blue-100 text-blue-700" :
                       "bg-red-100 text-red-700"
                     )}>
                       {booking.status}
@@ -213,6 +243,13 @@ export default function OwnerDashboard() {
                   </td>
                 </tr>
               ))}
+              {bookings.length === 0 && (
+                <tr>
+                  <td colSpan={6} className="px-6 py-12 text-center text-gray-400 font-medium">
+                    Aucune réservation trouvée pour vos établissements.
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>

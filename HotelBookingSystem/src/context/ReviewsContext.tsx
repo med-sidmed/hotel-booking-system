@@ -38,7 +38,7 @@ export const ReviewsProvider: React.FC<{ children: ReactNode }> = ({ children })
         // Mock initial reviews if none exist
         const initialReviews: Record<number, Review[]> = {
             1: [
-                { id: 1, hotelId: 1, userId: 101, userName: "Sophie Martin", rating: 5, comment: "Séjour incroyable, vue magnifique!", date: "2024-01-15", status: 'visible' },
+                { id: 1, hotelId: 1, userId: 101, userName: "user", rating: 5, comment: "Séjour incroyable, vue magnifique!", date: "2024-01-15", status: 'visible' },
                 { id: 2, hotelId: 1, userId: 102, userName: "Pierre Dupont", rating: 4, comment: "Très bon service, mais un peu cher.", date: "2024-02-10", status: 'visible', ownerResponse: { text: "Merci Pierre ! Nous espérons vous revoir bientôt.", date: "2024-02-11" } }
             ],
             2: [

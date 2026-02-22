@@ -1,14 +1,15 @@
-import { useState } from 'react';
-import { hotels } from '../../data/mockData';
+import { useState, useEffect } from 'react';
+import { hotelService } from '../../api/hotel.service';
 import { Edit, Trash2, Plus, Eye, EyeOff } from 'lucide-react';
-import type { Room } from '../../types';
+import type { Room, Hotel } from '../../types';
 import { ConfirmDialog, FormDialog } from '../../components/Dialog';
 import toast from 'react-hot-toast';
 
 export default function OwnerRooms() {
-  const myHotelId = 1;
-  const initialRooms = hotels.find(h => h.id === myHotelId)?.rooms || [];
-  const [rooms, setRooms] = useState<Room[]>(initialRooms);
+  const [hotelsList, setHotelsList] = useState<Hotel[]>([]);
+  const [selectedHotelId, setSelectedHotelId] = useState<string | number | null>(null);
+  const [rooms, setRooms] = useState<Room[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showFormDialog, setShowFormDialog] = useState(false);
   const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
@@ -22,16 +23,58 @@ export default function OwnerRooms() {
     available: true
   });
 
+  const fetchInitialData = async () => {
+    setIsLoading(true);
+    try {
+      const myHotels = await hotelService.getHotels();
+      setHotelsList(myHotels);
+      if (myHotels.length > 0) {
+        setSelectedHotelId(myHotels[0].id);
+        const hotelRooms = await hotelService.getRooms(myHotels[0].id);
+        setRooms(hotelRooms);
+      }
+    } catch (err) {
+      console.error('Failed to fetch rooms data:', err);
+      toast.error('Erreur lors du chargement des données');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchInitialData();
+  }, []);
+
+  const handleHotelChange = async (hotelId: string | number) => {
+    setSelectedHotelId(hotelId);
+    setIsLoading(true);
+    try {
+      const hotelRooms = await hotelService.getRooms(hotelId);
+      setRooms(hotelRooms);
+    } catch (err) {
+      toast.error('Erreur lors du chargement des chambres');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleDelete = (room: Room) => {
     setSelectedRoom(room);
     setShowDeleteDialog(true);
   };
 
-  const confirmDelete = () => {
-    if (selectedRoom) {
-      setRooms(rooms.filter(r => r.id !== selectedRoom.id));
-      toast.success(`Chambre "${selectedRoom.type}" supprimée avec succès`);
-      setSelectedRoom(null);
+  const confirmDelete = async () => {
+    if (selectedRoom && selectedHotelId) {
+      try {
+        await hotelService.deleteRoom(selectedHotelId, selectedRoom.id);
+        setRooms(rooms.filter(r => r.id !== selectedRoom.id));
+        toast.success(`Chambre "${selectedRoom.type}" supprimée avec succès`);
+      } catch (err) {
+        toast.error('Erreur lors de la suppression');
+      } finally {
+        setShowDeleteDialog(false);
+        setSelectedRoom(null);
+      }
     }
   };
 
@@ -63,8 +106,9 @@ export default function OwnerRooms() {
     setShowFormDialog(true);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!selectedHotelId) return;
 
     const amenitiesArray = formData.amenities
       .split(',')
@@ -76,72 +120,85 @@ export default function OwnerRooms() {
       .map(url => url.trim())
       .filter(url => url.length > 0);
 
-    if (selectedRoom) {
-      // Update
-      const updatedRoom: Room = {
-        ...selectedRoom,
-        type: formData.type,
-        description: formData.description,
-        price: formData.price,
-        capacity: formData.capacity,
-        amenities: amenitiesArray,
-        images: imagesArray,
-        available: formData.available
-      };
+    const payload = {
+      ...formData,
+      amenities: amenitiesArray,
+      images: imagesArray,
+      hotel: selectedHotelId
+    };
 
-      setRooms(rooms.map(r => r.id === selectedRoom.id ? updatedRoom : r));
-      toast.success(`Chambre "${formData.type}" mise à jour`);
-    } else {
-      // Create
-      const newRoom: Room = {
-        id: Math.max(...rooms.map(r => Number(r.id)), 100) + 1,
-        hotelId: myHotelId,
-        type: formData.type,
-        description: formData.description,
-        price: formData.price,
-        capacity: formData.capacity,
-        amenities: amenitiesArray,
-        images: imagesArray,
-        available: formData.available
-      };
-
-      setRooms([...rooms, newRoom]);
-      toast.success(`Chambre "${formData.type}" créée avec succès`);
+    try {
+      if (selectedRoom) {
+        // Update
+        const updated = await hotelService.updateRoom(selectedHotelId, selectedRoom.id, payload);
+        setRooms(rooms.map(r => r.id === selectedRoom.id ? updated : r));
+        toast.success(`Chambre "${formData.type}" mise à jour`);
+      } else {
+        // Create
+        const newRoom = await hotelService.createRoom(selectedHotelId, payload);
+        setRooms([...rooms, newRoom]);
+        toast.success(`Chambre "${formData.type}" créée avec succès`);
+      }
+      setShowFormDialog(false);
+    } catch (err) {
+      toast.error('Erreur lors de l\'enregistrement');
     }
-
-    setShowFormDialog(false);
   };
 
-  const toggleAvailability = (room: Room) => {
-    const updatedRoom = { ...room, available: !room.available };
-    setRooms(rooms.map(r => r.id === room.id ? updatedRoom : r));
-    toast.success(
-      updatedRoom.available 
-        ? `"${room.type}" est maintenant disponible` 
-        : `"${room.type}" est maintenant indisponible`
-    );
+  const toggleAvailability = async (room: Room) => {
+    if (!selectedHotelId) return;
+    try {
+      const updated = await hotelService.updateRoom(selectedHotelId, room.id, {
+        available: !room.available
+      });
+      setRooms(rooms.map(r => r.id === room.id ? updated : r));
+      toast.success(
+        updated.available 
+          ? `"${room.type}" est maintenant disponible` 
+          : `"${room.type}" est maintenant indisponible`
+      );
+    } catch (err) {
+      toast.error('Erreur lors de la mise à jour');
+    }
   };
 
   const availableCount = rooms.filter(r => r.available).length;
   const occupiedCount = rooms.length - availableCount;
 
+  if (isLoading && hotelsList.length === 0) return <div className="text-center py-12">Chargement de vos hôtels...</div>;
+
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-800">Mes Chambres</h1>
           <p className="text-gray-500 text-sm mt-1">Gérez les types de chambres et leur disponibilité</p>
         </div>
+        
+        {hotelsList.length > 1 && (
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-gray-600 font-medium">Hôtel:</span>
+            <select 
+              value={selectedHotelId || ''} 
+              onChange={(e) => handleHotelChange(e.target.value)}
+              className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-[#C6A87C] outline-none"
+            >
+              {hotelsList.map(h => (
+                <option key={h.id} value={h.id}>{h.name}</option>
+              ))}
+            </select>
+          </div>
+        )}
+
         <button
           onClick={handleCreate}
-          className="bg-[#6B5434] hover:bg-[#5B4424] text-white px-4 py-2 rounded-lg font-medium flex items-center transition-colors shadow-sm"
+          className="bg-[#6B5434] hover:bg-[#5B4424] text-white px-4 py-2 rounded-lg font-medium flex items-center transition-colors shadow-sm whitespace-nowrap"
         >
           <Plus size={18} className="mr-2" />
           Ajouter une chambre
         </button>
       </div>
 
-      {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
           <div className="flex items-center justify-between">
@@ -182,13 +239,12 @@ export default function OwnerRooms() {
         </div>
       </div>
 
-      {/* Rooms Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {rooms.map(room => (
           <div key={room.id} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden group hover:shadow-md transition-shadow">
             <div className="h-48 overflow-hidden relative">
               <img 
-                src={room.images[0]} 
+                src={room.images[0] || 'https://via.placeholder.com/400x300?text=Chambre'} 
                 alt={room.type} 
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
               />
@@ -254,7 +310,7 @@ export default function OwnerRooms() {
         ))}
       </div>
       
-      {rooms.length === 0 && (
+      {rooms.length === 0 && !isLoading && (
         <div className="text-center py-12 bg-white rounded-xl border border-dashed border-gray-300">
           <svg className="w-16 h-16 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
@@ -270,7 +326,13 @@ export default function OwnerRooms() {
         </div>
       )}
 
-      {/* Delete Confirmation Dialog */}
+      {hotelsList.length === 0 && !isLoading && (
+        <div className="text-center py-12 bg-white rounded-xl border border-dashed border-gray-300">
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">Aucun hôtel trouvé</h3>
+          <p className="text-gray-500 mb-6">Vous devez d'abord créer un hôtel pour pouvoir y ajouter des chambres.</p>
+        </div>
+      )}
+
       <ConfirmDialog
         isOpen={showDeleteDialog}
         onClose={() => setShowDeleteDialog(false)}
@@ -281,7 +343,6 @@ export default function OwnerRooms() {
         type="danger"
       />
 
-      {/* Form Dialog */}
       <FormDialog
         isOpen={showFormDialog}
         onClose={() => setShowFormDialog(false)}

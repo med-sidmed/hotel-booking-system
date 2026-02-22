@@ -51,7 +51,7 @@ export function OwnerSidebar() {
            <span className="text-xl font-bold text-[#C6A87C]">H</span>
         ) : (
            <div className="text-center">
-             <h1 className="text-xl font-bold tracking-wider text-white">HOTEL<span className="text-[#C6A87C]">OWNER</span></h1>
+             <h1 className="text-xl font-bold tracking-wider text-white">HOTEL <span className="text-[#C6A87C]"> MANAGER</span></h1>
              <p className="text-[10px] text-gray-400 uppercase tracking-widest mt-1">Manager Panel</p>
            </div>
         )}

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { bookingService } from '../../api/booking.service';
 import {
   Dialog,
   DialogContent,
@@ -11,6 +12,7 @@ import {
 } from '../ui/dialog';
 import { Button } from '../ui/button';
 import { PaymentForm } from './PaymentForm';
+import toast from 'react-hot-toast';
 
 interface BookingModalProps {
   room: any;
@@ -20,6 +22,7 @@ interface BookingModalProps {
 export function BookingModal({ room, hotelName }: BookingModalProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [step, setStep] = useState<1 | 2 | 3>(1); // 1: Details, 2: Payment, 3: Confirmation
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -32,23 +35,39 @@ export function BookingModal({ room, hotelName }: BookingModalProps) {
 
   const handleDetailsSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (new Date(bookingDetails.checkOut) <= new Date(bookingDetails.checkIn)) {
+      toast.error('La date de départ doit être après la date d\'arrivée');
+      return;
+    }
     setStep(2);
   };
 
-  const handlePaymentSubmit = () => {
-    setStep(3);
+  const handlePaymentSubmit = async () => {
+    setIsSubmitting(true);
+    try {
+      await bookingService.createBooking({
+        room: room.id,
+        check_in: bookingDetails.checkIn,
+        check_out: bookingDetails.checkOut,
+        guests: parseInt(bookingDetails.guests)
+      });
+      setStep(3);
+    } catch (err: any) {
+      console.error('Booking failed:', err);
+      toast.error(err.response?.data?.detail || 'Erreur lors de la réservation.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const resetModal = () => {
     setIsOpen(false);
-    // Reset state after transition
     setTimeout(() => {
       setStep(1);
       setBookingDetails({ checkIn: '', checkOut: '', guests: '1' });
     }, 300);
   };
 
-  // Calculate total price based on dates (mock calculation)
   const calculateTotal = () => {
     if (!bookingDetails.checkIn || !bookingDetails.checkOut) return room.price;
     const start = new Date(bookingDetails.checkIn);
@@ -58,7 +77,10 @@ export function BookingModal({ room, hotelName }: BookingModalProps) {
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+    <Dialog open={isOpen} onOpenChange={(open) => {
+      if (!open && step === 3) resetModal();
+      else setIsOpen(open);
+    }}>
       <DialogTrigger asChild>
         <button 
           className="bg-[#6B5434] hover:bg-[#5B4424] text-white px-8 py-3 rounded-md font-bold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
@@ -90,51 +112,51 @@ export function BookingModal({ room, hotelName }: BookingModalProps) {
         {step === 1 && (
           <form onSubmit={handleDetailsSubmit} className="grid gap-4 py-4">
             <div className="grid grid-cols-4 items-center gap-4">
-              <label htmlFor="checkIn" className="text-right font-medium">
+              <label htmlFor="checkIn" className="text-right font-medium text-sm">
                 Arrivée
               </label>
               <input
                 id="checkIn"
                 type="date"
-                className="col-span-3 border border-gray-300 rounded px-3 py-2"
+                className="col-span-3 border border-gray-300 rounded px-3 py-2 text-sm"
                 value={bookingDetails.checkIn}
                 onChange={(e) => setBookingDetails({...bookingDetails, checkIn: e.target.value})}
                 required
               />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
-              <label htmlFor="checkOut" className="text-right font-medium">
+              <label htmlFor="checkOut" className="text-right font-medium text-sm">
                 Départ
               </label>
               <input
                 id="checkOut"
                 type="date"
-                className="col-span-3 border border-gray-300 rounded px-3 py-2"
+                className="col-span-3 border border-gray-300 rounded px-3 py-2 text-sm"
                 value={bookingDetails.checkOut}
                 onChange={(e) => setBookingDetails({...bookingDetails, checkOut: e.target.value})}
                 required
               />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
-              <label htmlFor="guests" className="text-right font-medium">
+              <label htmlFor="guests" className="text-right font-medium text-sm">
                 Invités
               </label>
               <select
                 id="guests"
-                className="col-span-3 border border-gray-300 rounded px-3 py-2"
+                className="col-span-3 border border-gray-300 rounded px-3 py-2 text-sm"
                 value={bookingDetails.guests}
                 onChange={(e) => setBookingDetails({...bookingDetails, guests: e.target.value})}
               >
-                {[...Array(room.capacity)].map((_, i) => (
+                {[...Array(room.capacity || 4)].map((_, i) => (
                   <option key={i + 1} value={i + 1}>{i + 1} Personne(s)</option>
                 ))}
               </select>
             </div>
             <div className="flex justify-end gap-3 mt-4">
-              <Button type="button" variant="outline" onClick={() => setIsOpen(false)} className="border-gray-300 text-gray-700 hover:bg-gray-50">
+              <Button type="button" variant="outline" onClick={() => setIsOpen(false)} className="border-gray-300 text-gray-700 hover:bg-gray-50 h-10">
                 Annuler
               </Button>
-              <Button type="submit" className="bg-[#6B5434] hover:bg-[#5B4424] text-white">
+              <Button type="submit" className="bg-[#6B5434] hover:bg-[#5B4424] text-white h-10">
                 Continuer
               </Button>
             </div>
@@ -146,6 +168,7 @@ export function BookingModal({ room, hotelName }: BookingModalProps) {
             onSubmit={handlePaymentSubmit}
             onBack={() => setStep(1)}
             totalPrice={calculateTotal()}
+            isLoading={isSubmitting}
           />
         )}
 
@@ -158,7 +181,7 @@ export function BookingModal({ room, hotelName }: BookingModalProps) {
             </div>
             <p className="text-lg font-medium text-gray-900 mb-2">Merci pour votre réservation !</p>
             <p className="text-gray-600 mb-6">Un email de confirmation vous a été envoyé.</p>
-            <Button onClick={resetModal} className="bg-[#6B5434] hover:bg-[#5B4424] text-white w-full">
+            <Button onClick={resetModal} className="bg-[#6B5434] hover:bg-[#5B4424] text-white w-full h-12 text-lg font-bold">
               Fermer
             </Button>
           </div>

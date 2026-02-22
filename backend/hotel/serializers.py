@@ -7,6 +7,7 @@ from .models import (
     Transaction,
     Promotion,
     Review,
+    Favorite,
 )
 
 
@@ -69,14 +70,36 @@ class PricingRuleSerializer(serializers.ModelSerializer):
 
 
 class BookingSerializer(serializers.ModelSerializer):
+    guest_name = serializers.SerializerMethodField()
+    hotel_name = serializers.SerializerMethodField()
+    room_type_name = serializers.SerializerMethodField()
 
     class Meta:
         model = Booking
         fields = [
-            'id', 'user', 'room', 'check_in', 'check_out', 'total_price',
+            'id', 'user', 'guest_name', 'room', 'hotel_name', 'room_type_name',
+            'check_in', 'check_out', 'total_price',
             'status', 'promotion', 'created_at', 'updated_at',
         ]
         read_only_fields = ['id', 'user', 'total_price', 'status', 'created_at', 'updated_at']
+
+    def get_guest_name(self, obj):
+        try:
+            return obj.user.name if obj.user else "N/A"
+        except:
+            return "N/A"
+
+    def get_hotel_name(self, obj):
+        try:
+            return obj.room.hotel.name if obj.room and obj.room.hotel else "N/A"
+        except:
+            return "N/A"
+
+    def get_room_type_name(self, obj):
+        try:
+            return obj.room.type if obj.room else "N/A"
+        except:
+            return "N/A"
 
 
 class BookingCreateSerializer(serializers.ModelSerializer):
@@ -135,3 +158,12 @@ class ReviewCreateSerializer(serializers.ModelSerializer):
 
 class ReviewReplySerializer(serializers.Serializer):
     text = serializers.CharField(max_length=2000)
+
+
+class FavoriteSerializer(serializers.ModelSerializer):
+    hotel_details = HotelListSerializer(source='hotel', read_only=True)
+
+    class Meta:
+        model = Favorite
+        fields = ['id', 'user', 'hotel', 'hotel_details', 'created_at']
+        read_only_fields = ['id', 'user', 'created_at']

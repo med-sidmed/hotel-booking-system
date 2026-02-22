@@ -2,6 +2,7 @@ import uuid
 from decimal import Decimal
 from django.db import models
 from django.conf import settings
+from django.utils import timezone
 
 
 class Hotel(models.Model):
@@ -195,6 +196,7 @@ class Transaction(models.Model):
     method = models.CharField(
         max_length=20,
         choices=PaymentMethod.choices,
+        default=PaymentMethod.CARD,
     )
     status = models.CharField(
         max_length=20,
@@ -204,6 +206,7 @@ class Transaction(models.Model):
     payment_type = models.CharField(
         max_length=20,
         choices=PaymentType.choices,
+        default=PaymentType.FULL_PAYMENT,
     )
     invoice_url = models.URLField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -230,10 +233,11 @@ class Promotion(models.Model):
     discount_type = models.CharField(
         max_length=20,
         choices=DiscountType.choices,
+        default=DiscountType.PERCENTAGE,
     )
-    discount_value = models.DecimalField(max_digits=10, decimal_places=2)
-    valid_from = models.DateTimeField()
-    valid_until = models.DateTimeField()
+    discount_value = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal('0.00'))
+    valid_from = models.DateTimeField(default=timezone.now)
+    valid_until = models.DateTimeField(default=timezone.now)
     min_purchase = models.DecimalField(
         max_digits=10,
         decimal_places=2,
@@ -298,3 +302,26 @@ class Review(models.Model):
 
     def __str__(self):
         return f"{self.hotel.name} — {self.user} ({self.rating}/5)"
+
+class Favorite(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='favorites',
+    )
+    hotel = models.ForeignKey(
+        Hotel,
+        on_delete=models.CASCADE,
+        related_name='favorited_by',
+    )
+    created_at = models.DateTimeField(auto_now_add=True, null=True, blank=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        unique_together = ('user', 'hotel')
+        verbose_name = 'Favori'
+        verbose_name_plural = 'Favoris'
+
+    def __str__(self):
+        return f"{self.user} loves {self.hotel}"

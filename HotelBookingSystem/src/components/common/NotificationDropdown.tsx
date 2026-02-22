@@ -5,7 +5,7 @@ import { useNotifications } from '../../context/NotificationContext';
 interface NotificationDropdownProps {
   isOpen: boolean;
   onClose: () => void;
-  userId?: number; // Optional: filter by user if provided
+  userId?: number | string; // Optional: filter by user if provided
 }
 
 export function NotificationDropdown({ isOpen, onClose, userId }: NotificationDropdownProps) {

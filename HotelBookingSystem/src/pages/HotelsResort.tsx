@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
-import { hotels } from "../data/mockData";
 import { useSearchParams } from "react-router-dom";
+import { hotelService } from "../api/hotel.service";
+import type { Hotel } from "../types";
+import { HotelCard } from "../components/HotelCard";
 
-// Composant SearchBar
 // Composant SearchBar
 function SearchBar() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -76,41 +77,53 @@ function SearchBar() {
   );
 }
 
-import { HotelCard } from "../components/HotelCard";
-
-
-
 // Composant principal
 export default function HotelListingPage() {
   const [searchParams] = useSearchParams();
-  const destination = searchParams.get('destination')?.toLowerCase() || '';
+  const [hotelsList, setHotelsList] = useState<Hotel[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const filteredHotels = hotels.filter(hotel => {
-    if (!destination) return true;
-    return hotel.location?.toLowerCase().includes(destination) || 
-           hotel.name.toLowerCase().includes(destination);
-  });
+  const destination = searchParams.get('destination') || '';
+
+  useEffect(() => {
+    const fetchHotels = async () => {
+      setIsLoading(true);
+      try {
+        const data = await hotelService.getHotels({ city: destination });
+        setHotelsList(data);
+      } catch (err) {
+        console.error('Failed to fetch hotels:', err);
+        setError('Impossible de charger les hôtels.');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchHotels();
+  }, [destination]);
 
   return (
     <div className="min-h-screen bg-gray-50">
       <Header/>
-      {/* Search Bar */}
       <SearchBar />
 
-      {/* Hotels List */}
       <div className="max-w-7xl mx-auto px-4 py-12">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-800 mb-2">
             Découvrez nos hôtels
           </h1>
           <p className="text-gray-600">
-            Explorez {filteredHotels.length} destinations de luxe dans le monde
+            Explorez {hotelsList.length} destinations de luxe disponible
           </p>
         </div>
 
-        {filteredHotels.length > 0 ? (
+        {isLoading ? (
+          <div className="text-center py-12"><p>Chargement des hôtels...</p></div>
+        ) : error ? (
+          <div className="text-center py-12"><p className="text-red-500">{error}</p></div>
+        ) : hotelsList.length > 0 ? (
           <div className="space-y-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {filteredHotels.map((hotel) => (
+            {hotelsList.map((hotel) => (
               <HotelCard key={hotel.id} hotel={hotel} />
             ))}
           </div>
@@ -122,7 +135,6 @@ export default function HotelListingPage() {
         )}
       </div>
 
-      {/* Footer */}
       <Footer />
     </div>
   );

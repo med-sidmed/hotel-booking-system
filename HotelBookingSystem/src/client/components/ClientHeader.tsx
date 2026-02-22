@@ -1,14 +1,29 @@
-import { Bell, Search, User, Sun, Moon } from 'lucide-react';
+import { Bell, Search, User as UserIcon, Sun, Moon, LogOut, UserCircle, Settings, ChevronDown } from 'lucide-react';
 import { useNotifications } from '../../context/NotificationContext';
 import { useTheme } from '../../context/ThemeContext';
-import { useState } from 'react';
+import { useAuth } from '../../context/AuthContext';
+import { useState, useRef, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { NotificationDropdown } from '../../components/common/NotificationDropdown';
 
 export function ClientHeader() {
   const { unreadCount } = useNotifications();
   const { theme, setTheme } = useTheme();
+  const { user, logout } = useAuth();
   const [showNotifications, setShowNotifications] = useState(false);
-  const clientId = 101; // Current client ID (from mock data)
+  const [showUserDropdown, setShowUserDropdown] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const clientId = user?.id || 101;
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setShowUserDropdown(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   return (
     <header className="bg-white h-16 shadow-sm border-b border-gray-200 flex items-center justify-between px-6">
@@ -46,18 +61,70 @@ export function ClientHeader() {
           <NotificationDropdown 
             isOpen={showNotifications} 
             onClose={() => setShowNotifications(false)} 
-            userId={clientId}
+            userId={Number(clientId) || 101}
           />
         </div>
         
-        <div className="flex items-center space-x-3 pl-4 border-l border-gray-200">
-          <div className="text-right">
-            <p className="text-sm font-semibold text-gray-900">Sophie Martin</p>
-            <p className="text-xs text-gray-500">Gold Member</p>
-          </div>
-          <div className="w-10 h-10 rounded-full bg-[#C6A87C]/10 flex items-center justify-center text-[#C6A87C] border border-[#C6A87C]/20">
-            <User size={20} />
-          </div>
+        <div className="relative" ref={dropdownRef}>
+          <button 
+            onClick={() => setShowUserDropdown(!showUserDropdown)}
+            className="flex items-center space-x-3 pl-4 border-l border-gray-200 hover:opacity-80 transition-opacity"
+          >
+            <div className="text-right hidden sm:block">
+              <p className="text-sm font-semibold text-gray-900">{user?.name || 'Utilisateur'}</p>
+              <p className="text-xs text-gray-500 capitalize">{user?.role === 'USER' ? 'Client' : user?.role || 'Membre'}</p>
+            </div>
+            <div className="flex items-center gap-1">
+              <div className="w-10 h-10 rounded-full bg-[#C6A87C]/10 flex items-center justify-center text-[#C6A87C] border border-[#C6A87C]/20 overflow-hidden">
+                {user?.avatar ? (
+                  <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
+                ) : (
+                  <UserIcon size={20} />
+                )}
+              </div>
+              <ChevronDown size={14} className={`text-gray-400 transition-transform ${showUserDropdown ? 'rotate-180' : ''}`} />
+            </div>
+          </button>
+
+          {showUserDropdown && (
+            <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-100 py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+              <div className="px-4 py-2 border-b border-gray-50 sm:hidden">
+                <p className="text-sm font-semibold text-gray-900 truncate">{user?.name}</p>
+                <p className="text-xs text-gray-500 truncate">{user?.email}</p>
+              </div>
+              
+              <Link 
+                to="/profile" 
+                onClick={() => setShowUserDropdown(false)}
+                className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-[#C6A87C] transition-colors"
+              >
+                <UserCircle size={18} />
+                Mon Profil
+              </Link>
+              
+              <Link 
+                to="/profile/settings" 
+                onClick={() => setShowUserDropdown(false)}
+                className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-[#C6A87C] transition-colors"
+              >
+                <Settings size={18} />
+                Paramètres
+              </Link>
+
+              <div className="border-t border-gray-50 mt-1 pt-1">
+                <button 
+                  onClick={() => {
+                    setShowUserDropdown(false);
+                    logout();
+                  }}
+                  className="flex items-center gap-3 px-4 py-2 text-sm text-red-600 hover:bg-red-50 w-full text-left transition-colors"
+                >
+                  <LogOut size={18} />
+                  Déconnexion
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </header>

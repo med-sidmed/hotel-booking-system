@@ -1,7 +1,8 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import type { Message, Conversation } from '../types';
 import { useAuth } from './AuthContext';
-import { mockMessages, mockConversations } from '../data/mockData';
+import { messageService } from '../api/message.service';
+import toast from 'react-hot-toast';
 
 interface MessageContextType {
   conversations: Conversation[];
@@ -10,82 +11,97 @@ interface MessageContextType {
   sendMessage: (receiverId: string | number, content: string, hotelId?: string | number) => Promise<void>;
   getMessages: (conversationId: string) => Message[];
   unreadTotal: number;
+  refreshConversations: () => Promise<void>;
 }
 
 const MessageContext = createContext<MessageContextType | undefined>(undefined);
 
 export function MessageProvider({ children }: { children: React.ReactNode }) {
-  const { user } = useAuth();
-  const [conversations, setConversations] = useState<Conversation[]>(mockConversations);
-  const [messages, setMessages] = useState<Message[]>(mockMessages);
+  const { user, isAuthenticated } = useAuth();
+  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [messages, setMessages] = useState<Record<string, Message[]>>({});
   const [activeConversation, setActiveConversation] = useState<Conversation | null>(null);
 
-  // Initial mock data
+  const refreshConversations = useCallback(async () => {
+    if (!isAuthenticated) return;
+    try {
+      const data = await messageService.getConversations();
+      setConversations(data);
+    } catch (err) {
+      console.error('Failed to fetch conversations:', err);
+    }
+  }, [isAuthenticated]);
+
+  const refreshMessages = useCallback(async () => {
+    if (!isAuthenticated || !activeConversation) return;
+    try {
+      const data = await messageService.getMessages(activeConversation.id);
+      setMessages(prev => ({
+        ...prev,
+        [activeConversation.id]: data
+      }));
+    } catch (err) {
+      console.error('Failed to fetch messages:', err);
+    }
+  }, [isAuthenticated, activeConversation]);
+
   useEffect(() => {
-    if (!user) return;
-    // We already initialized with mockConversations/mockMessages
-  }, [user]);
+    if (isAuthenticated) {
+      refreshConversations();
+      const interval = setInterval(refreshConversations, 30000); // Poll every 30s
+      return () => clearInterval(interval);
+    } else {
+      setConversations([]);
+      setMessages({});
+      setActiveConversation(null);
+    }
+  }, [isAuthenticated, refreshConversations]);
+
+  useEffect(() => {
+    if (activeConversation) {
+      refreshMessages();
+      const interval = setInterval(refreshMessages, 5000); // Poll every 5s for active chat
+      return () => clearInterval(interval);
+    }
+  }, [activeConversation, refreshMessages]);
 
   const sendMessage = async (receiverId: string | number, content: string, hotelId?: string | number) => {
     if (!user) return;
 
-    const newMessage: Message = {
-      id: `msg-${Date.now()}`,
-      senderId: user.id,
-      senderName: user.name,
-      receiverId,
-      conversationId: activeConversation?.id || `conv-${Date.now()}`,
-      content,
-      timestamp: new Date().toISOString(),
-      read: true
-    };
-
-    setMessages(prev => [...prev, newMessage]);
-
-    // Update or create conversation
-    setConversations(prev => {
-      const existing = prev.find(c => c.id === newMessage.conversationId);
-      if (existing) {
-        return prev.map(c => c.id === existing.id ? { ...c, lastMessage: newMessage } : c);
+    try {
+      let convId = activeConversation?.id;
+      
+      // If no conversation exists yet, we create it
+      if (!convId) {
+        const newConv = await messageService.createConversation({
+          participants_ids: [user.id, receiverId],
+          hotel_id: hotelId
+        });
+        convId = newConv.id;
+        setActiveConversation(newConv);
       }
-      return [{
-        id: newMessage.conversationId,
-        participants: [
-          { id: user.id, name: user.name, role: user.role, avatar: user.avatar },
-          { id: receiverId, name: 'Correspondant', role: 'USER' } // Simplified
-        ],
-        unreadCount: 0,
-        lastMessage: newMessage,
-        hotelId
-      }, ...prev];
-    });
 
-    // Simulate owner reply after 2 seconds
-    if (user.role === 'USER') {
-      setTimeout(() => {
-        const reply: Message = {
-          id: `msg-${Date.now() + 1}`,
-          senderId: receiverId,
-          senderName: 'Hôtelier Luxotel',
-          receiverId: user.id,
-          conversationId: newMessage.conversationId,
-          content: 'Merci pour votre message. Un de nos agents reviendra vers vous très bientôt.',
-          timestamp: new Date().toISOString(),
-          read: false
-        };
-        setMessages(prev => [...prev, reply]);
-        setConversations(prev => prev.map(c => 
-          c.id === reply.conversationId ? { ...c, lastMessage: reply, unreadCount: c.unreadCount + 1 } : c
-        ));
-      }, 3000);
+      const newMessage = await messageService.sendMessage(convId as string, content);
+      
+      setMessages(prev => ({
+        ...prev,
+        [convId as string]: [...(prev[convId as string] || []), newMessage]
+      }));
+
+      refreshConversations(); // Update last message in list
+    } catch (err) {
+      console.error('Send message failed:', err);
+      toast.error('Erreur lors de l\'envoi du message');
     }
   };
 
   const getMessages = (conversationId: string) => {
-    return messages.filter(m => m.conversationId === conversationId);
+    return messages[conversationId] || [];
   };
 
-  const unreadTotal = conversations.reduce((acc, conv) => acc + conv.unreadCount, 0);
+  const unreadTotal = useMemo(() => 
+    conversations.reduce((acc, conv) => acc + (conv.unreadCount || 0), 0)
+  , [conversations]);
 
   return (
     <MessageContext.Provider value={{
@@ -94,7 +110,8 @@ export function MessageProvider({ children }: { children: React.ReactNode }) {
       setActiveConversation,
       sendMessage,
       getMessages,
-      unreadTotal
+      unreadTotal,
+      refreshConversations
     }}>
       {children}
     </MessageContext.Provider>

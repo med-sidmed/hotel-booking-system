@@ -11,9 +11,10 @@ interface PaymentFormProps {
   onSubmit: (data: PaymentData) => void;
   onBack: () => void;
   totalPrice: number;
+  isLoading?: boolean;
 }
 
-export function PaymentForm({ onSubmit, onBack, totalPrice }: PaymentFormProps) {
+export function PaymentForm({ onSubmit, onBack, totalPrice, isLoading }: PaymentFormProps) {
   const [formData, setFormData] = useState<PaymentData>({
     cardNumber: '',
     expiryDate: '',
@@ -108,9 +109,10 @@ export function PaymentForm({ onSubmit, onBack, totalPrice }: PaymentFormProps) 
           </button>
           <button
             type="submit"
-            className="flex-1 px-4 py-2 bg-[#6B5434] text-white rounded hover:bg-[#5B4424] font-medium"
+            disabled={isLoading}
+            className="flex-1 px-4 py-2 bg-[#6B5434] text-white rounded hover:bg-[#5B4424] font-medium disabled:opacity-50"
           >
-            Payer {totalPrice}€
+            {isLoading ? 'Traitement...' : `Payer ${totalPrice}€`}
           </button>
         </div>
       </form>

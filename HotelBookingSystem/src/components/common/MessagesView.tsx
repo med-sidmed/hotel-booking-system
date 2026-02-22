@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { useLocation } from 'react-router-dom';
 import { 
   Search, 
   Send, 
@@ -19,7 +20,32 @@ export default function MessagesView() {
   const { conversations, activeConversation, setActiveConversation, sendMessage, getMessages } = useMessages();
   const [messageText, setMessageText] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
+  const location = useLocation();
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const state = location.state as { startWith?: { id: string | number; name: string; hotelId: string | number } };
+    if (state?.startWith && user) {
+      const existing = conversations.find(c => 
+        c.participants.some(p => p.id === state.startWith?.id) && 
+        c.hotelId === state.startWith?.hotelId
+      );
+      if (existing) {
+        setActiveConversation(existing);
+      } else {
+        // Create a temporary "pending" conversation to show in UI
+        setActiveConversation({
+          id: 'NEW',
+          participants: [
+            { id: user.id, name: user.name, role: 'USER' },
+            { id: state.startWith.id, name: state.startWith.name, role: 'OWNER' }
+          ],
+          unreadCount: 0,
+          hotelId: state.startWith.hotelId
+        });
+      }
+    }
+  }, [location.state, conversations, user, setActiveConversation]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -42,8 +68,10 @@ export default function MessagesView() {
 
     const otherPartner = activeConversation.participants.find(p => p.id !== user.id);
     if (otherPartner) {
-      sendMessage(otherPartner.id, messageText, activeConversation.hotelId);
-      setMessageText('');
+        const receiverId = otherPartner.id;
+        const hotelId = activeConversation.hotelId;
+        sendMessage(receiverId, messageText, hotelId);
+        setMessageText('');
     }
   };
 
@@ -120,7 +148,7 @@ export default function MessagesView() {
             <div className="p-4 border-b dark:border-gray-800 flex items-center justify-between bg-white dark:bg-[#1A1A1A]">
               <div className="flex items-center gap-3">
                 <img 
-                  src={activeConversation.participants.find(p => p.id !== user.id)?.avatar || 'https://i.pravatar.cc/150'} 
+                  src={activeConversation.participants.find(p => p.id !== user.id)?.avatar || `https://ui-avatars.com/api/?name=${activeConversation.participants.find(p => p.id !== user.id)?.name}`} 
                   alt="Active chat"
                   className="w-10 h-10 rounded-full object-cover"
                 />

@@ -80,7 +80,7 @@ export default function ClientSettings() {
                     <input
                       type="text"
                       className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#C6A87C]/20 focus:border-[#C6A87C] outline-none transition-all"
-                      defaultValue="Sophie Martin"
+                      defaultValue="user"
                     />
                   </div>
                 </div>

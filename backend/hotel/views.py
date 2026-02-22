@@ -1,12 +1,14 @@
 """Vues API pour l'app hotel."""
 from decimal import Decimal
 from django.utils import timezone
+from django.db import models
 from rest_framework import viewsets, status, generics
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.views import APIView
 
-from .models import Hotel, Room, Booking, Promotion, Review, BookingStatus, PricingRule, Transaction
+from .models import Hotel, Room, Booking, Promotion, Review, BookingStatus, PricingRule, Transaction, Favorite
 from .serializers import (
     HotelListSerializer,
     HotelDetailSerializer,
@@ -20,22 +22,16 @@ from .serializers import (
     ReviewCreateSerializer,
     ReviewReplySerializer,
     PricingRuleSerializer,
-    TransactionSerializer
+    TransactionSerializer,
+    FavoriteSerializer
 )
-from .permissions import IsHotelOwnerOrAdmin, IsOwnerOrAdmin, IsAdminOrReadOnly
+from .permissions import IsHotelOwnerOrAdmin, IsOwnerOrAdmin, IsAdminOrReadOnly, is_admin
 
 
-# ----- Hotels -----
-
+ 
 
 class HotelViewSet(viewsets.ModelViewSet):
-    """
-    GET    /api/hotels/          → liste (filtres: city, price_min, price_max, rating, amenities)
-    GET    /api/hotels/{id}/     → détail
-    POST   /api/hotels/          → créer (Owner/Admin)
-    PUT    /api/hotels/{id}/     → modifier (Owner/Admin)
-    DELETE /api/hotels/{id}/     → supprimer (Admin)
-    """
+  
     queryset = Hotel.objects.all().select_related('owner')
 
     def get_serializer_class(self):
@@ -55,8 +51,11 @@ class HotelViewSet(viewsets.ModelViewSet):
         price_max = self.request.query_params.get('price_max')
         rating = self.request.query_params.get('rating')
         amenities = self.request.query_params.get('amenities')
+        is_mine = self.request.query_params.get('mine')
         if city:
             qs = qs.filter(location__icontains=city)
+        if is_mine and self.request.user.is_authenticated:
+            qs = qs.filter(owner=self.request.user)
         if price_min is not None:
             try:
                 qs = qs.filter(price_per_night__gte=Decimal(price_min))
@@ -83,7 +82,6 @@ class HotelViewSet(viewsets.ModelViewSet):
         serializer.save(owner=self.request.user)
 
     def destroy(self, request, *args, **kwargs):
-        from .permissions import is_admin
         if not is_admin(request.user):
             return Response(
                 {'detail': 'Seul un administrateur peut supprimer un hôtel.'},
@@ -92,14 +90,10 @@ class HotelViewSet(viewsets.ModelViewSet):
         return super().destroy(request, *args, **kwargs)
 
 
-# ----- Rooms (nested + by id) -----
-
+ 
 
 class HotelRoomListCreateView(generics.ListCreateAPIView):
-    """
-    GET  /api/hotels/{hotel_id}/rooms/  → liste des chambres (public)
-    POST /api/hotels/{hotel_id}/rooms/  → ajouter une chambre (Owner)
-    """
+ 
     permission_classes = []  # géré dans get_permissions
 
     def get_permissions(self):
@@ -132,17 +126,13 @@ class HotelRoomListCreateView(generics.ListCreateAPIView):
             if not hotel:
                 from rest_framework.exceptions import NotFound
                 raise NotFound('Hôtel non trouvé.')
-            if hotel.owner_id != request.user.pk and not getattr(request.user, 'is_staff', False):
+            if hotel.owner_id != request.user.pk and not is_admin(request.user):
                 from rest_framework.exceptions import PermissionDenied
                 raise PermissionDenied('Vous n\'êtes pas le propriétaire de cet hôtel.')
 
 
 class RoomDetailView(generics.RetrieveUpdateDestroyAPIView):
-    """
-    GET    /api/rooms/{id}/  → détail
-    PUT    /api/rooms/{id}/  → modifier (Owner)
-    DELETE /api/rooms/{id}/  → supprimer (Owner)
-    """
+
     queryset = Room.objects.all().select_related('hotel')
     serializer_class = RoomSerializer
     permission_classes = [AllowAny]  # GET public
@@ -202,9 +192,6 @@ class BookingListCreateView(generics.ListCreateAPIView):
 
 
 class OwnerBookingListView(generics.ListAPIView):
-    """
-    GET /api/bookings/owner/  → réservations des hôtels dont je suis propriétaire (Owner)
-    """
     serializer_class = BookingSerializer
     permission_classes = [IsAuthenticated]
 
@@ -216,7 +203,6 @@ class OwnerBookingListView(generics.ListAPIView):
 
 
 class BookingDetailView(generics.RetrieveAPIView):
-    """GET /api/bookings/{id}/  → détail d'une réservation."""
     queryset = Booking.objects.all().select_related('user', 'room', 'room__hotel', 'promotion')
     serializer_class = BookingSerializer
     permission_classes = [IsAuthenticated]
@@ -232,7 +218,6 @@ class BookingDetailView(generics.RetrieveAPIView):
 
 
 class BookingCancelView(generics.GenericAPIView):
-    """PATCH /api/bookings/{id}/cancel/  → annuler une réservation."""
     permission_classes = [IsAuthenticated]
     lookup_url_kwarg = 'id'
 
@@ -257,7 +242,6 @@ class BookingCancelView(generics.GenericAPIView):
 
 
 class BookingStatusView(generics.GenericAPIView):
-    """PATCH /api/bookings/{id}/status/  → changer statut (Confirmé / Check-in / Out) — Owner/Admin."""
     permission_classes = [IsAuthenticated]
     lookup_url_kwarg = 'id'
 
@@ -285,11 +269,9 @@ class BookingStatusView(generics.GenericAPIView):
         return Response(BookingSerializer(booking).data)
 
 
-# ----- Reviews -----
-
+ 
 
 class HotelReviewListView(generics.ListAPIView):
-    """GET /api/hotels/{hotel_id}/reviews/  → avis d'un hôtel."""
     serializer_class = ReviewSerializer
     permission_classes = [AllowAny]
 
@@ -297,8 +279,18 @@ class HotelReviewListView(generics.ListAPIView):
         return Review.objects.filter(hotel_id=self.kwargs['hotel_id']).select_related('user')
 
 
+class MyReviewListView(generics.ListAPIView):
+    """
+    GET /api/reviews/mine/ → Liste des avis laissés par l'utilisateur connecté
+    """
+    serializer_class = ReviewSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return Review.objects.filter(user=self.request.user).select_related('hotel', 'user')
+
+
 class ReviewCreateFromBookingView(generics.CreateAPIView):
-    """POST /api/bookings/{id}/review/  → laisser un avis après séjour (Client)."""
     serializer_class = ReviewCreateSerializer
     permission_classes = [IsAuthenticated]
 
@@ -323,7 +315,6 @@ class ReviewCreateFromBookingView(generics.CreateAPIView):
 
 
 class ReviewReplyView(generics.GenericAPIView):
-    """POST /api/reviews/{id}/reply/  → répondre à un avis (Owner)."""
     queryset = Review.objects.all().select_related('hotel')
     permission_classes = [IsAuthenticated]
     lookup_url_kwarg = 'id'
@@ -342,14 +333,7 @@ class ReviewReplyView(generics.GenericAPIView):
         return Response(ReviewSerializer(review).data)
 
 
-# ----- Promotions -----
-
-
 class PromotionListCreateView(generics.ListCreateAPIView):
-    """
-    GET  /api/promotions/  → promos actives (tout le monde)
-    POST /api/promotions/  → créer une promo (Admin)
-    """
     queryset = Promotion.objects.all()
     serializer_class = PromotionSerializer
     permission_classes = [IsAdminOrReadOnly]
@@ -363,7 +347,6 @@ class PromotionListCreateView(generics.ListCreateAPIView):
 
 
 class PromotionValidateView(generics.GenericAPIView):
-    """POST /api/promotions/validate/  → vérifier un code promo (Client)."""
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
@@ -420,3 +403,113 @@ class TransactionViewSet(viewsets.ReadOnlyModelViewSet):
         if is_admin(self.request.user):
             return Transaction.objects.all()
         return Transaction.objects.filter(user=self.request.user)
+class StatsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        from django.db.models import Sum, Count, Q
+        from django.db.models.functions import TruncMonth
+        from datetime import timedelta
+        from .permissions import is_admin, is_owner
+        
+        user = request.user
+        if not (is_admin(user) or is_owner(user)):
+            return Response({'detail': 'Accès refusé.'}, status=status.HTTP_403_FORBIDDEN)
+
+        # Base Filters
+        transaction_qs = Transaction.objects.all()
+        booking_qs = Booking.objects.all()
+        hotel_qs = Hotel.objects.all()
+        room_qs = Room.objects.all()
+
+        if not is_admin(user):
+            my_hotel_ids = Hotel.objects.filter(owner=user).values_list('pk', flat=True)
+            transaction_qs = transaction_qs.filter(booking__room__hotel_id__in=my_hotel_ids)
+            booking_qs = booking_qs.filter(room__hotel_id__in=my_hotel_ids)
+            hotel_qs = hotel_qs.filter(owner=user)
+            room_qs = room_qs.filter(hotel_id__in=my_hotel_ids)
+
+        # 1. KPI Calculations
+        agg_rev = transaction_qs.filter(status='COMPLETED').aggregate(total=Sum('amount'))
+        total_revenue = float(agg_rev['total'] or 0)
+        
+        total_bookings = booking_qs.count()
+        total_rooms = room_qs.count()
+        occupied_rooms = booking_qs.filter(status='CONFIRMED').count()
+        
+        occupancy_rate = (occupied_rooms / total_rooms * 100) if total_rooms > 0 else 0
+        adr = (total_revenue / total_bookings) if total_bookings > 0 else 0
+        rev_par = (total_revenue / total_rooms) if total_rooms > 0 else 0
+        
+        # 2. Monthly Revenue (Last 6 months)
+        six_months_ago = timezone.now() - timedelta(days=180)
+        monthly_raw = (
+            transaction_qs.filter(status='COMPLETED', created_at__gte=six_months_ago)
+            .annotate(month_date=TruncMonth('created_at'))
+            .values('month_date')
+            .annotate(revenue=Sum('amount'), count=Count('id'))
+            .order_by('month_date')
+        )
+        
+        monthly_data = []
+        for d in monthly_raw:
+            m_date = d.get('month_date')
+            m_str = m_date.strftime('%b') if m_date and hasattr(m_date, 'strftime') else str(m_date)
+            monthly_data.append({
+                'month': m_str,
+                'revenue': float(d.get('revenue') or 0),
+                'bookings': d.get('count') or 0
+            })
+        
+        # 3. Top Hotels
+        # Fixed: check if status='CONFIRMED' value is correct (BookingStatus.CONFIRMED.value or just 'CONFIRMED')
+        top_hotels_raw = (
+            hotel_qs.annotate(
+                bookings_count=Count('rooms__bookings'),
+                total_rev=Sum('rooms__bookings__total_price', filter=Q(rooms__bookings__status='CONFIRMED'))
+            )
+            .order_by('-total_rev')[:10]
+        )
+        
+        top_hotels = []
+        for h in top_hotels_raw:
+            top_hotels.append({
+                'name': h.name,
+                'bookings': getattr(h, 'bookings_count', 0),
+                'revenue': float(getattr(h, 'total_rev', 0) or 0)
+            })
+        
+        # 4. Status Distribution
+        status_raw = booking_qs.values('status').annotate(count=Count('id'))
+        status_distribution = list(status_raw)
+        
+        return Response({
+            'kpis': {
+                'total_revenue': total_revenue,
+                'occupancy_rate': round(occupancy_rate, 1),
+                'adr': round(adr, 0),
+                'rev_par': round(rev_par, 0),
+                'total_rooms': total_rooms,
+                'occupied_rooms': occupied_rooms
+            },
+            'monthly_data': monthly_data,
+            'top_hotels': top_hotels,
+            'status_distribution': status_distribution
+        })
+
+
+class FavoriteViewSet(viewsets.ModelViewSet):
+    """
+    Gestion des favoris :
+    - GET    /api/favorites/ → mes favoris
+    - POST   /api/favorites/ → ajouter un favori
+    - DELETE /api/favorites/{id}/ → supprimer un favori
+    """
+    serializer_class = FavoriteSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return Favorite.objects.filter(user=self.request.user).select_related('hotel')
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)

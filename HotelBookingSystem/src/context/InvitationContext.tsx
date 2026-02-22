@@ -1,70 +1,125 @@
 import React, { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
 import type { Invitation } from '../types';
+import { authService } from '../api/auth.service';
+import { useAuth } from './AuthContext';
+import toast from 'react-hot-toast';
 
 interface InvitationContextType {
   invitations: Invitation[];
-  createInvitation: (role: 'ADMIN' | 'OWNER', email?: string) => Invitation;
-  validateToken: (token: string) => Invitation | null;
-  markInvitationAsUsed: (token: string) => void;
-  deleteInvitation: (id: string) => void;
+  isLoading: boolean;
+  createInvitation: (role: 'ADMIN' | 'OWNER', email?: string, hotelName?: string) => Promise<Invitation>;
+  deleteInvitation: (id: string | number) => Promise<void>;
+  refreshInvitations: () => Promise<void>;
+  validateToken: (token: string) => Promise<Invitation | undefined>;
+  markInvitationAsUsed: (token: string) => Promise<void>;
 }
 
 const InvitationContext = createContext<InvitationContextType | undefined>(undefined);
 
 export const InvitationProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  const { user, isAuthenticated } = useAuth();
   const [invitations, setInvitations] = useState<Invitation[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
-  useEffect(() => {
-    const stored = localStorage.getItem('luxotel_invitations');
-    if (stored) {
-      setInvitations(JSON.parse(stored));
+  const fetchInvitations = async () => {
+    if (!isAuthenticated || user?.role !== 'ADMIN') return;
+    setIsLoading(true);
+    try {
+      const data = await authService.getInvitations();
+      // Map backend snake_case to frontend camelCase
+      const mappedData = data.map((inv: any) => ({
+        ...inv,
+        createdAt: inv.created_at,
+        expiresAt: inv.expires_at,
+        used: inv.used || false,
+        hotelName: inv.hotel_name
+      }));
+      setInvitations(mappedData);
+    } catch (err) {
+      console.error('Failed to fetch invitations:', err);
+    } finally {
+      setIsLoading(false);
     }
-  }, []);
+  };
 
   useEffect(() => {
-    localStorage.setItem('luxotel_invitations', JSON.stringify(invitations));
-  }, [invitations]);
+    if (isAuthenticated && user?.role === 'ADMIN') {
+      fetchInvitations();
+    } else {
+      setInvitations([]);
+    }
+  }, [isAuthenticated, user?.role]);
 
-  const createInvitation = (role: 'ADMIN' | 'OWNER', email?: string): Invitation => {
-    const newInvitation: Invitation = {
-      id: `INV-${Date.now()}`,
-      token: Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15),
-      role,
-      email,
-      used: false,
-      createdAt: new Date().toISOString(),
-      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days
-    };
-
-    setInvitations(prev => [...prev, newInvitation]);
-    return newInvitation;
+  const createInvitation = async (role: 'ADMIN' | 'OWNER', email?: string, hotelName?: string): Promise<Invitation> => {
+    try {
+      const newInv = await authService.createInvitation({ 
+        role: role.toLowerCase(), 
+        email, 
+        hotel_name: hotelName 
+      });
+      const mapped = {
+        ...newInv,
+        createdAt: newInv.created_at,
+        expiresAt: newInv.expires_at,
+        used: newInv.used || false,
+        hotelName: newInv.hotel_name
+      };
+      setInvitations(prev => [...prev, mapped]);
+      return mapped;
+    } catch (err) {
+      toast.error('Erreur lors de la création de l\'invitation');
+      throw err;
+    }
   };
 
-  const validateToken = (token: string): Invitation | null => {
-    const invite = invitations.find(i => i.token === token);
-    if (!invite) return null;
-    if (invite.used) return null;
-    if (new Date(invite.expiresAt) < new Date()) return null;
-    return invite;
+  const deleteInvitation = async (id: string | number) => {
+    try {
+      await authService.deleteInvitation(id);
+      setInvitations(prev => prev.filter(inv => inv.id !== id));
+      toast.success('Invitation supprimée');
+    } catch (err) {
+      toast.error('Erreur lors de la suppression');
+      throw err;
+    }
+  };
+  
+  const validateToken = async (token: string): Promise<Invitation | undefined> => {
+    try {
+        const data = await authService.validateInvitation(token);
+        return {
+            ...data,
+            createdAt: data.created_at,
+            expiresAt: data.expires_at,
+            used: data.used,
+            hotelName: data.hotel_name
+        } as Invitation;
+    } catch (err) {
+        console.error('Token validation failed:', err);
+        return undefined;
+    }
   };
 
-  const markInvitationAsUsed = (token: string) => {
-    setInvitations(prev => prev.map(inv => 
-      inv.token === token ? { ...inv, used: true } : inv
-    ));
-  };
-
-  const deleteInvitation = (id: string) => {
-    setInvitations(prev => prev.filter(inv => inv.id !== id));
+  const markInvitationAsUsed = async (token: string) => {
+    try {
+        await authService.markInvitationAsUsed(token);
+        // Also update local state if we have it
+        setInvitations(prev => prev.map(inv => 
+          inv.token === token ? { ...inv, used: true } : inv
+        ));
+    } catch (err) {
+        console.error('Failed to mark invitation as used:', err);
+    }
   };
 
   return (
     <InvitationContext.Provider value={{ 
       invitations, 
+      isLoading,
       createInvitation, 
-      validateToken, 
-      markInvitationAsUsed,
-      deleteInvitation
+      deleteInvitation,
+      refreshInvitations: fetchInvitations,
+      validateToken,
+      markInvitationAsUsed
     }}>
       {children}
     </InvitationContext.Provider>

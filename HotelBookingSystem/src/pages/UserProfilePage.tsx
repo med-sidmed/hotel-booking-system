@@ -1,41 +1,41 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Header from "../components/Header";
-import type { Booking, UserLogin } from '../types';
+import type { Booking } from '../types';
 import { useFavorites } from '../context/FavoritesContext';
-import { hotels } from '../data/mockData';
+import { bookingService } from '../api/booking.service';
+import { hotelService } from '../api/hotel.service';
 import { HotelCard } from '../components/HotelCard';
 import { useAuth } from '../context/AuthContext';
 
 export default function UserProfilePage() {
   const { favorites } = useFavorites();
   const [activeTab, setActiveTab] = useState<'bookings' | 'favorites'>('bookings');
+  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [favoriteHotels, setFavoriteHotels] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const { user, isAuthenticated, logout } = useAuth();
+  const { user, logout } = useAuth();
 
+  useEffect(() => {
+    const fetchData = async () => {
+      setIsLoading(true);
+      try {
+        const [bookingsData, allHotels] = await Promise.all([
+          bookingService.getBookings(),
+          hotelService.getHotels()
+        ]);
+        setBookings(bookingsData);
+        setFavoriteHotels(allHotels.filter(h => favorites.includes(h.id)));
+      } catch (err) {
+        console.error('Failed to fetch profile data:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchData();
+  }, [favorites]);
 
-
-  const bookings: Booking[] = [
-    {
-      id: 1,
-      userId: 1,
-      roomId: 101,
-      checkIn: "2024-03-15",
-      checkOut: "2024-03-18",
-      totalPrice: 450,
-      status: "CONFIRMED"
-    },
-    {
-      id: 2,
-      userId: 1,
-      roomId: 205,
-      checkIn: "2023-12-10",
-      checkOut: "2023-12-12",
-      totalPrice: 300,
-      status: "COMPLETED" as any
-    }
-  ];
-
-  const favoriteHotels = hotels.filter(h => favorites.includes(h.id));
+  if (isLoading) return <div className="text-center py-12">Chargement de votre profil...</div>;
 
   return (
     <div className="min-h-screen bg-gray-50">

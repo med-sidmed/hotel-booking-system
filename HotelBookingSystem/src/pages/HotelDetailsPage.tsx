@@ -1,7 +1,9 @@
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import { useParams, useNavigate } from "react-router-dom";
-import { hotels } from "../data/mockData";
+import { useEffect, useState } from "react";
+import { hotelService } from "../api/hotel.service";
+import type { Hotel, Room } from "../types";
 import { useReviews } from "../context/ReviewsContext";
 import { ReviewList } from "../components/reviews/ReviewList";
 import { AddReviewDialog } from "../components/reviews/AddReviewDialog";
@@ -9,14 +11,47 @@ import { AddReviewDialog } from "../components/reviews/AddReviewDialog";
 export default function HotelDetailsPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const hotel = hotels.find((h) => h.id.toString() === id);
+  const [hotel, setHotel] = useState<Hotel | null>(null);
+  const [rooms, setRooms] = useState<Room[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  
   const { getReviewsByHotelId } = useReviews();
   const hotelReviews = hotel ? getReviewsByHotelId(hotel.id) : [];
 
-  if (!hotel) {
+  useEffect(() => {
+    const fetchHotelData = async () => {
+      if (!id) return;
+      setIsLoading(true);
+      try {
+        const [hotelData, roomsData] = await Promise.all([
+          hotelService.getHotel(id),
+          hotelService.getRooms(id)
+        ]);
+        setHotel(hotelData);
+        setRooms(roomsData);
+      } catch (err) {
+        console.error('Failed to fetch hotel details:', err);
+        setError('Hôtel introuvable ou erreur serveur.');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchHotelData();
+  }, [id]);
+
+  if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <h2 className="text-2xl font-bold text-gray-800">Hotel not found</h2>
+        <h2 className="text-2xl font-bold text-gray-800">Chargement...</h2>
+      </div>
+    );
+  }
+
+  if (error || !hotel) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <h2 className="text-2xl font-bold text-gray-800">{error || "Hôtel non trouvé"}</h2>
       </div>
     );
   }
@@ -27,7 +62,7 @@ export default function HotelDetailsPage() {
 
       <div className="relative h-96">
         <img
-          src={hotel.image}
+          src={hotel.image || (hotel.images && hotel.images[0]) || 'https://via.placeholder.com/1200x400?text=No+Image'}
           alt={hotel.name}
           className="w-full h-full object-cover"
         />
@@ -48,19 +83,23 @@ export default function HotelDetailsPage() {
           <div className="flex items-center gap-4">
             <span className="flex items-center text-yellow-500">
                <span className="text-xl font-bold mr-1">★</span>
-               {hotel.reviews} avis
+               {hotel.rating} ({hotel.reviews} avis)
             </span>
           </div>
         </div>
 
         <h2 className="text-3xl font-bold mb-8">Chambres disponibles</h2>
         
-        {hotel.rooms.length > 0 ? (
+        {rooms.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {hotel.rooms.map((room) => (
+            {rooms.map((room) => (
               <div key={room.id} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow">
                 <div className="h-56 relative">
-                  <img src={room.images[0]} alt={room.type} className="w-full h-full object-cover" />
+                  <img 
+                    src={(room.images && room.images[0]) || 'https://via.placeholder.com/400x300?text=Room+Image'} 
+                    alt={room.type} 
+                    className="w-full h-full object-cover" 
+                  />
                   <div className="absolute top-4 right-4 bg-white/90 px-3 py-1 rounded-full font-bold text-[#6B5434]">
                     {room.price}€ / nuit
                   </div>

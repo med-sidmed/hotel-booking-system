@@ -2,13 +2,15 @@ from rest_framework import permissions
 
 
 def is_admin(user):
-    if user.is_staff:
+    if user.is_staff or user.is_superuser:
         return True
-    return getattr(user, 'role', None) == 'ADMIN'
+    role = getattr(user, 'role', '')
+    return role.upper() == 'ADMIN' if role else False
 
 
 def is_owner(user):
-    return getattr(user, 'role', None) == 'OWNER'
+    role = getattr(user, 'role', '')
+    return role.upper() == 'OWNER' if role else False
 
 
 def is_hotel_owner(user, hotel):
@@ -39,7 +41,20 @@ class IsHotelOwnerOrAdmin(permissions.BasePermission):
             return False
         if is_admin(request.user):
             return True
-        return obj.owner_id == request.user.pk
+        
+        # Check owner_id if exists (Hotel)
+        if hasattr(obj, 'owner_id'):
+            return obj.owner_id == request.user.pk
+        
+        # Check hotel.owner_id if exists (Room, PricingRule)
+        hotel = getattr(obj, 'hotel', None)
+        if not hotel and hasattr(obj, 'room'):
+            hotel = obj.room.hotel
+            
+        if hotel and hasattr(hotel, 'owner_id'):
+            return hotel.owner_id == request.user.pk
+            
+        return False
 
 
 class IsAuthenticatedOrReadOnly(permissions.BasePermission):

@@ -2,26 +2,35 @@ from rest_framework import permissions
 
 class IsAdmin(permissions.BasePermission):
     def has_permission(self, request, view):
-        return request.user.is_authenticated and request.user.role == 'admin'
+        if not request.user.is_authenticated: return False
+        role = getattr(request.user, 'role', '')
+        return request.user.is_superuser or (role and role.upper() == 'ADMIN')
 
 class IsOwner(permissions.BasePermission):
     def has_permission(self, request, view):
-        return request.user.is_authenticated and request.user.role == 'owner'
+        if not request.user.is_authenticated: return False
+        role = getattr(request.user, 'role', '')
+        return role and role.upper() == 'OWNER'
 
 class IsHotelOwner(permissions.BasePermission):
     def has_object_permission(self, request, view, obj):
-        # Admin can do anything
-        if request.user.role == 'admin':
+        user = request.user
+        if not user.is_authenticated: return False
+        role = getattr(user, 'role', '')
+        if user.is_superuser or (role and role.upper() == 'ADMIN'):
             return True
-        # Check if the user is the owner of the hotel
+        
         if hasattr(obj, 'owner'):
-            return obj.owner == request.user
+            return obj.owner == user
         if hasattr(obj, 'hotel'):
-            return obj.hotel.owner == request.user
+            return obj.hotel.owner == user
         return False
 
 class IsBookingOwner(permissions.BasePermission):
     def has_object_permission(self, request, view, obj):
-        if request.user.role == 'admin':
+        user = request.user
+        if not user.is_authenticated: return False
+        role = getattr(user, 'role', '')
+        if user.is_superuser or (role and role.upper() == 'ADMIN'):
             return True
-        return obj.user == request.user or obj.room.hotel.owner == request.user
+        return obj.user == user or (hasattr(obj, 'room') and obj.room.hotel.owner == user)

@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { mockUsers } from '../data/mockData';
 import toast from 'react-hot-toast';
 
 export default function LoginPage() {
@@ -17,27 +16,26 @@ export default function LoginPage() {
     setIsSubmitting(true);
 
     try {
-      // Find user in mock data
-      const user = mockUsers.find(u => u.email === email && u.password === password);
+      const userData = await login(email, password);
+      toast.success('Connexion réussie !');
       
-      if (user) {
-        await login(user.email, user.role);
-        toast.success(`Bienvenue, ${user.name} !`);
-        
-        // Redirect to intended page or dashboard based on role
-        const from = (location.state as any)?.from?.pathname;
-        if (from) {
-          navigate(from, { replace: true });
-        } else {
-          // Default redirection based on role
-          const defaultPath = user.role === 'ADMIN' ? '/admin' : user.role === 'OWNER' ? '/owner' : '/profile';
-          navigate(defaultPath, { replace: true });
-        }
+      const from = (location.state as any)?.from?.pathname;
+      if (from) {
+        navigate(from, { replace: true });
       } else {
-        toast.error('Email ou mot de passe incorrect');
+        // Role-based redirection
+        const user = userData || (JSON.parse(localStorage.getItem('auth_user') || 'null'));
+        if (user?.role === 'ADMIN') {
+          navigate('/admin', { replace: true });
+        } else if (user?.role === 'OWNER') {
+          navigate('/owner', { replace: true });
+        } else {
+          navigate('/', { replace: true });
+        }
       }
-    } catch (error) {
-      toast.error('Une erreur est survenue lors de la connexion');
+    } catch (error: any) {
+      const message = error.response?.data?.detail || 'Email ou mot de passe incorrect';
+      toast.error(message);
     } finally {
       setIsSubmitting(false);
     }
@@ -56,7 +54,7 @@ export default function LoginPage() {
           </p>
         </div>
 
-        <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
+        <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md text-[#3d2817]">
           <div className="bg-white py-8 px-4 shadow-xl rounded-lg sm:px-10 border border-[#e5e7eb]">
             <form className="space-y-6" onSubmit={handleSubmit}>
               <div>

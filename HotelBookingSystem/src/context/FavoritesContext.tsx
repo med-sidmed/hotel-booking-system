@@ -1,42 +1,62 @@
 import React, { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
+import toast from 'react-hot-toast';
+
+interface FavoriteItem {
+  id: string | number;
+  hotelId: number | string;
+  hotel: any;
+}
 
 interface FavoritesContextType {
-  favorites: number[];
-  addFavorite: (hotelId: number) => void;
-  removeFavorite: (hotelId: number) => void;
-  isFavorite: (hotelId: number) => boolean;
+  favorites: FavoriteItem[];
+  addFavorite: (hotel: any) => void;
+  removeFavorite: (hotelId: number | string) => void;
+  isFavorite: (hotelId: number | string) => boolean;
 }
 
 const FavoritesContext = createContext<FavoritesContextType | undefined>(undefined);
 
 export const FavoritesProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [favorites, setFavorites] = useState<number[]>([]);
+  const [favorites, setFavorites] = useState<FavoriteItem[]>([]);
 
+  // Load from localStorage on mount
   useEffect(() => {
-    const storedFavorites = localStorage.getItem('favorites');
-    if (storedFavorites) {
-      setFavorites(JSON.parse(storedFavorites));
+    const saved = localStorage.getItem('favorites');
+    if (saved) {
+      try {
+        setFavorites(JSON.parse(saved));
+      } catch (err) {
+        console.error('Error parsing favorites from localStorage', err);
+      }
     }
   }, []);
 
-  const addFavorite = (hotelId: number) => {
-    setFavorites((prev) => {
-      const newFavorites = [...prev, hotelId];
-      localStorage.setItem('favorites', JSON.stringify(newFavorites));
-      return newFavorites;
-    });
+  // Save to localStorage whenever favorites change
+  useEffect(() => {
+    localStorage.setItem('favorites', JSON.stringify(favorites));
+  }, [favorites]);
+
+  const addFavorite = (hotel: any) => {
+    if (!hotel || !hotel.id) return;
+    if (favorites.some(f => String(f.hotelId) === String(hotel.id))) return;
+    
+    const newItem: FavoriteItem = {
+      id: Date.now(), // Local ID
+      hotelId: hotel.id,
+      hotel: hotel
+    };
+    
+    setFavorites(prev => [...prev, newItem]);
+    toast.success('Ajouté aux favoris');
   };
 
-  const removeFavorite = (hotelId: number) => {
-    setFavorites((prev) => {
-      const newFavorites = prev.filter((id) => id !== hotelId);
-      localStorage.setItem('favorites', JSON.stringify(newFavorites));
-      return newFavorites;
-    });
+  const removeFavorite = (hotelId: number | string) => {
+    setFavorites(prev => prev.filter(f => String(f.hotelId) !== String(hotelId)));
+    toast.success('Retiré des favoris');
   };
 
-  const isFavorite = (hotelId: number) => {
-    return favorites.includes(hotelId);
+  const isFavorite = (hotelId: number | string) => {
+    return favorites.some((f) => String(f.hotelId) === String(hotelId));
   };
 
   return (

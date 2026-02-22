@@ -20,21 +20,24 @@ export default function RegisterPage() {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { login, register } = useAuth();
   const { validateToken, markInvitationAsUsed } = useInvitations();
 
   useEffect(() => {
     if (token) {
-      const invite = validateToken(token);
-      if (invite) {
-        setInvitation(invite);
-        if (invite.email) {
-          setFormData(prev => ({ ...prev, email: invite.email! }));
+      const checkToken = async () => {
+        const invite = await validateToken(token);
+        if (invite) {
+          setInvitation(invite);
+          if (invite.email) {
+            setFormData(prev => ({ ...prev, email: invite.email! }));
+          }
+        } else {
+          toast.error('Invitation invalide ou expirée');
         }
-      } else {
-        toast.error('Invitation invalide ou expirée');
-      }
-      setIsTokenValidating(false);
+        setIsTokenValidating(false);
+      };
+      checkToken();
     }
   }, [token, validateToken]);
 
@@ -60,13 +63,18 @@ export default function RegisterPage() {
 
     setIsSubmitting(true);
     try {
-      // Simulate registration
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const role = invitation ? (invitation.role as string).toLowerCase() : 'user';
       
-      const role = invitation ? invitation.role : 'USER';
+      await register({
+        email: formData.email,
+        name: formData.name,
+        password: formData.password,
+        role: role,
+        invitation_token: token
+      });
       
       // Auto login after registration
-      await login(formData.email, role);
+      await login(formData.email, formData.password);
       
       if (token) {
         markInvitationAsUsed(token);
@@ -75,8 +83,8 @@ export default function RegisterPage() {
       toast.success('Compte créé avec succès !');
       
       // Redirect based on role
-      if (role === 'ADMIN') navigate('/admin');
-      else if (role === 'OWNER') navigate('/owner');
+      if (role === 'admin') navigate('/admin');
+      else if (role === 'owner') navigate('/owner');
       else navigate('/profile');
       
     } catch (error) {
@@ -87,7 +95,7 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#f5f1e8] flex flex-col">
+    <div className="min-h-screen bg-[#f5f1e8] flex flex-col text-black">
       
 
       <div className="flex-grow flex flex-col justify-center py-12 sm:px-6 lg:px-8">
@@ -97,7 +105,9 @@ export default function RegisterPage() {
             </h2>
             <p className="mt-2 text-center text-sm text-gray-600">
               {invitation 
-                ? `Vous avez été invité à rejoindre la plateforme en tant que ${invitation.role === 'ADMIN' ? 'administrateur' : 'propriétaire d\'hôtel'}.`
+                ? invitation.role === 'OWNER' && invitation.hotelName
+                  ? `Vous avez été invité à gérer l'hôtel "${invitation.hotelName}".`
+                  : `Vous avez été invité à rejoindre la plateforme en tant que ${invitation.role === 'ADMIN' ? 'administrateur' : 'propriétaire d\'hôtel'}.`
                 : 'Créez un compte pour débloquer des avantages exclusifs'}
             </p>
           </div>

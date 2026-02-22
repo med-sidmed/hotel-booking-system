@@ -16,7 +16,7 @@ export function HotelCard({ hotel }: HotelCardProps) {
     if (isFav) {
       removeFavorite(hotel.id);
     } else {
-      addFavorite(hotel.id);
+      addFavorite(hotel);
     }
   };
 
@@ -25,7 +25,7 @@ export function HotelCard({ hotel }: HotelCardProps) {
       <div className="flex flex-col md:flex-row">
         <div className="md:w-1/3 relative">
           <img
-            src={hotel.image}
+            src={hotel.image || (hotel.images && hotel.images[0]) || 'https://via.placeholder.com/400x300?text=No+Image'}
             alt={hotel.name}
             className="w-full h-64 md:h-full object-cover"
           />
@@ -87,7 +87,7 @@ export function HotelCard({ hotel }: HotelCardProps) {
           </div>
 
           <div className="mt-4 flex justify-between items-center">
-            <span className="text-sm font-medium">{hotel.rooms.length} Chambres dispo</span>
+            <span className="text-sm font-medium">{hotel.rooms?.length || 0} Chambres dispo</span>
             <button 
               onClick={() => navigate(`/hotels/${hotel.id}`)}
               className="bg-[#6B5434] hover:bg-[#5B4424] text-white px-6 py-2 rounded-md text-sm font-semibold transition-colors"

@@ -1,7 +1,9 @@
-import { useState } from 'react';
-import { hotels, mockBookings } from '../../data/mockData';
-import { Calendar as CalendarIcon, MapPin, Plus, Edit, Trash2, AlertCircle } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { hotelService } from '../../api/hotel.service';
+import { bookingService } from '../../api/booking.service';
+import { MapPin, Plus, Edit, Trash2, AlertCircle, Loader2 } from 'lucide-react';
 import { ConfirmDialog, FormDialog } from '../../components/Dialog';
+import type { Hotel, Booking } from '../../types';
 import toast from 'react-hot-toast';
 
 interface SpecialEvent {
@@ -15,8 +17,12 @@ interface SpecialEvent {
 }
 
 export default function AdminCalendar() {
+  const [hotels, setHotels] = useState<Hotel[]>([]);
+  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [selectedHotel, setSelectedHotel] = useState<number | 'ALL'>('ALL');
+  
   const [specialEvents, setSpecialEvents] = useState<SpecialEvent[]>([
     {
       id: '1',
@@ -37,6 +43,7 @@ export default function AdminCalendar() {
       description: 'Jour férié national - tarifs maximaux'
     }
   ]);
+
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showFormDialog, setShowFormDialog] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<SpecialEvent | null>(null);
@@ -48,6 +55,26 @@ export default function AdminCalendar() {
     priceMultiplier: 1,
     description: ''
   });
+
+  const fetchGlobalData = async () => {
+    try {
+      const [hotelsData, bookingsData] = await Promise.all([
+        hotelService.getHotels(),
+        bookingService.getBookings()
+      ]);
+      setHotels(hotelsData);
+      setBookings(bookingsData);
+    } catch (err) {
+      console.error('Failed to fetch admin calendar data:', err);
+      toast.error('Erreur lors du chargement des données globales');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchGlobalData();
+  }, []);
 
   const eventTypeConfig = {
     LOW_SEASON: { label: 'Basse Saison', color: 'bg-green-500', multiplier: 0.8 },
@@ -99,13 +126,11 @@ export default function AdminCalendar() {
     e.preventDefault();
 
     if (selectedEvent) {
-      // Update
       setSpecialEvents(specialEvents.map(ev =>
         ev.id === selectedEvent.id ? { ...ev, ...formData } : ev
       ));
       toast.success(`Évènement "${formData.name}" mis à jour`);
     } else {
-      // Create
       const newEvent: SpecialEvent = {
         id: `EVENT-${Date.now()}`,
         ...formData
@@ -116,7 +141,6 @@ export default function AdminCalendar() {
     setShowFormDialog(false);
   };
 
-  // Generate calendar for current month
   const generateCalendar = () => {
     const year = selectedDate.getFullYear();
     const month = selectedDate.getMonth();
@@ -124,133 +148,132 @@ export default function AdminCalendar() {
     const lastDay = new Date(year, month + 1, 0);
     const days = [];
 
-    // Add padding days from previous month
     const startPadding = firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1;
     for (let i = startPadding; i > 0; i--) {
       const date = new Date(year, month, 1 - i);
       days.push({ date: date.getDate(), isCurrentMonth: false, fullDate: date });
     }
 
-    // Add current month days
     for (let i = 1; i <= lastDay.getDate(); i++) {
-      const date = new Date(year, month, i);
-      const dateStr = date.toISOString().split('T')[0];
+        const date = new Date(year, month, i);
+        const dateStr = date.toISOString().split('T')[0];
 
-      const bookingsOnDate = mockBookings.filter(b => {
-        if (selectedHotel !== 'ALL' && b.hotelId !== selectedHotel) return false;
-        return b.checkIn <= dateStr && b.checkOut >= dateStr;
-      }).length;
+        const bookingsOnDateCount = bookings.filter(b => {
+          if (selectedHotel !== 'ALL' && Number(b.hotelId) !== Number(selectedHotel)) return false;
+          const checkIn = String(b.checkIn || b.check_in || '').split('T')[0];
+          const checkOut = String(b.checkOut || b.check_out || '').split('T')[0];
+          return checkIn <= dateStr && checkOut > dateStr;
+        }).length;
 
-      const specialEvent = specialEvents.find(ev =>
-        dateStr >= ev.startDate && dateStr <= ev.endDate
-      );
+        const specialEvent = specialEvents.find(ev =>
+          dateStr >= ev.startDate && dateStr <= ev.endDate
+        );
 
-      days.push({
-        date: i,
-        isCurrentMonth: true,
-        fullDate: date,
-        bookings: bookingsOnDate,
-        isToday: date.toDateString() === new Date().toDateString(),
-        specialEvent
-      });
+        days.push({
+          date: i,
+          isCurrentMonth: true,
+          fullDate: date,
+          bookings: bookingsOnDateCount,
+          isToday: date.toDateString() === new Date().toDateString(),
+          specialEvent
+        });
     }
 
     return days;
   };
 
+  if (isLoading) {
+    return (
+        <div className="flex flex-col items-center justify-center py-20">
+            <Loader2 className="w-8 h-8 animate-spin text-[#6B5434] mb-4" />
+            <p className="text-gray-500 font-bold uppercase tracking-widest text-xs">Chargement du calendrier global...</p>
+        </div>
+    );
+  }
+
   const calendarDays = generateCalendar();
   const monthName = selectedDate.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
 
-  const goToPreviousMonth = () => {
-    setSelectedDate(new Date(selectedDate.getFullYear(), selectedDate.getMonth() - 1, 1));
-  };
-
-  const goToNextMonth = () => {
-    setSelectedDate(new Date(selectedDate.getFullYear(), selectedDate.getMonth() + 1, 1));
-  };
-
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-in fade-in duration-500">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold text-gray-800">Calendrier Global</h1>
-          <p className="text-gray-500 text-sm mt-1">Vue d'ensemble des disponibilités</p>
+          <h1 className="text-2xl font-black text-gray-900 uppercase tracking-tighter">Calendrier Global</h1>
+          <p className="text-gray-500 text-sm mt-1">Vue stratégique sur l'ensemble du parc hôtelier</p>
         </div>
         <button
           onClick={handleCreate}
-          className="px-4 py-2 bg-[#C6A87C] hover:bg-[#B5966A] text-white rounded-lg font-medium flex items-center gap-2 transition-colors shadow-sm"
+          className="px-6 py-2.5 bg-[#6B5434] hover:bg-[#5A462C] text-white rounded-lg font-black uppercase tracking-widest text-xs flex items-center gap-2 transition-all shadow-lg active:scale-95"
         >
-          <Plus size={18} />
-          Nouvel Évènement
+          <Plus size={16} />
+          Planifier un évènement
         </button>
       </div>
 
-      {/* Controls */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-        <div className="flex gap-4 items-center">
-          <div className="flex-1">
-            <label className="block text-sm font-medium text-gray-700 mb-2">Hôtel</label>
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+        <div className="flex flex-wrap gap-4 items-center">
+          <div className="flex-1 min-w-[200px]">
+            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2">Filtrer par établissement</label>
             <select
               value={selectedHotel}
               onChange={(e) => setSelectedHotel(e.target.value === 'ALL' ? 'ALL' : Number(e.target.value))}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#C6A87C] focus:border-transparent"
+              className="w-full px-4 py-2 bg-gray-50 border-none rounded-xl text-sm font-bold text-gray-900 focus:ring-2 focus:ring-[#C6A87C] outline-none"
             >
-              <option value="ALL">Tous les hôtels</option>
-              {hotels.map(hotel => (
-                <option key={hotel.id} value={hotel.id}>{hotel.name}</option>
+              <option value="ALL">TOUS LES HÔTELS</option>
+              {hotels.map(h => (
+                <option key={h.id} value={h.id}>{h.name.toUpperCase()}</option>
               ))}
             </select>
           </div>
         </div>
       </div>
 
-      {/* Calendar */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-bold text-gray-800 capitalize">{monthName}</h3>
+      <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-8">
+        <div className="flex justify-between items-center mb-8">
+          <h3 className="text-xl font-black text-gray-900 uppercase tracking-widest">{monthName}</h3>
           <div className="flex gap-2">
             <button
-              onClick={goToPreviousMonth}
-              className="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+              onClick={() => setSelectedDate(new Date(selectedDate.getFullYear(), selectedDate.getMonth() - 1, 1))}
+              className="p-2 border border-gray-100 rounded-xl hover:bg-gray-50 transition-colors"
             >
               ←
             </button>
             <button
-              onClick={goToNextMonth}
-              className="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+              onClick={() => setSelectedDate(new Date(selectedDate.getFullYear(), selectedDate.getMonth() + 1, 1))}
+              className="p-2 border border-gray-100 rounded-xl hover:bg-gray-50 transition-colors"
             >
               →
             </button>
           </div>
         </div>
 
-        <div className="grid grid-cols-7 gap-2">
+        <div className="grid grid-cols-7 gap-3">
           {['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'].map(day => (
-            <div key={day} className="text-center font-semibold text-gray-700 py-2">
+            <div key={day} className="text-center text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4">
               {day}
             </div>
           ))}
           {calendarDays.map((day, index) => (
             <div
               key={index}
-              className={`aspect-square border rounded-lg p-2 relative ${day.isCurrentMonth ? '' : 'opacity-30'
-                } ${day.isToday ? 'border-[#C6A87C] bg-[#C6A87C]/5' : 'border-gray-200'
-                } ${day.specialEvent ? `${eventTypeConfig[day.specialEvent.type].color}/10` : ''
-                } hover:shadow-md transition-shadow cursor-pointer`}
+              className={`aspect-square border rounded-2xl p-3 relative transition-all group ${day.isCurrentMonth ? 'hover:shadow-xl' : 'opacity-10 grayscale'
+                } ${day.isToday ? 'border-[#C6A87C] bg-[#C6A87C]/5' : 'border-gray-50'
+                } ${day.specialEvent ? `${eventTypeConfig[day.specialEvent.type].color}/10` : 'bg-gray-50/30'
+                }`}
             >
-              <div className={`text-sm font-medium ${day.isToday ? 'text-[#C6A87C]' : 'text-gray-900'}`}>
+              <div className={`text-xs font-black ${day.isToday ? 'text-[#C6A87C]' : 'text-gray-900'}`}>
                 {day.date}
               </div>
               {day.bookings && day.bookings > 0 && (
-                <div className="absolute bottom-1 right-1">
-                  <span className="text-xs bg-blue-600 text-white px-1.5 py-0.5 rounded-full">
-                    {day.bookings}
+                <div className="absolute bottom-3 right-3">
+                  <span className="text-[10px] bg-blue-600/10 text-blue-600 px-2 py-0.5 rounded-full font-black">
+                    {day.bookings} RES.
                   </span>
                 </div>
               )}
               {day.specialEvent && (
-                <div className="absolute top-1 left-1">
-                  <div className={`w-2 h-2 rounded-full ${eventTypeConfig[day.specialEvent.type].color}`}></div>
+                <div className="absolute top-3 right-3">
+                  <div className={`w-2 h-2 rounded-full ring-4 ring-white ${eventTypeConfig[day.specialEvent.type].color}`}></div>
                 </div>
               )}
             </div>
@@ -258,159 +281,137 @@ export default function AdminCalendar() {
         </div>
       </div>
 
-      {/* Special Events List */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-        <h3 className="text-lg font-bold text-gray-800 mb-4">Évènements Spéciaux & Saisons</h3>
-        <div className="space-y-3">
-          {specialEvents.map(event => (
-            <div key={event.id} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:border-[#C6A87C]/50 transition-colors">
-              <div className="flex items-center gap-4">
-                <div className={`w-3 h-3 rounded-full ${eventTypeConfig[event.type].color}`}></div>
-                <div>
-                  <h4 className="font-semibold text-gray-900">{event.name}</h4>
-                  <p className="text-sm text-gray-600">{event.startDate} → {event.endDate}</p>
-                  <div className="flex gap-2 mt-1">
-                    <span className={`px-2 py-1 rounded-full text-xs font-semibold text-white ${eventTypeConfig[event.type].color}`}>
-                      {eventTypeConfig[event.type].label}
-                    </span>
-                    <span className="px-2 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-700">
-                      ×{event.priceMultiplier}
-                    </span>
-                  </div>
-                </div>
-              </div>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => handleEdit(event)}
-                  className="px-3 py-2 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-lg font-medium text-sm transition-colors flex items-center gap-1"
-                >
-                  <Edit size={14} />
-                  Modifier
-                </button>
-                <button
-                  onClick={() => handleDelete(event)}
-                  className="px-3 py-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg font-medium text-sm transition-colors"
-                >
-                  <Trash2 size={14} />
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Hotel Availability Summary */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-        <h3 className="text-lg font-bold text-gray-800 mb-4">Disponibilité par Hôtel</h3>
-        <div className="space-y-3">
-          {hotels.map(hotel => {
-            const hotelBookings = mockBookings.filter(b => b.hotelId === hotel.id && b.status === 'CONFIRMED').length;
-            const totalRooms = hotel.rooms.length;
-            const occupancyRate = totalRooms > 0 ? ((hotelBookings / totalRooms) * 100).toFixed(0) : 0;
-
-            return (
-              <div key={hotel.id} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:border-[#C6A87C]/50 transition-colors">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-blue-50 rounded-lg">
-                    <MapPin className="text-blue-600" size={20} />
-                  </div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
+          <h3 className="text-xs font-black text-[#C6A87C] uppercase tracking-widest mb-6 uppercase">Évènements & Saisonalité</h3>
+          <div className="space-y-4">
+            {specialEvents.map(event => (
+              <div key={event.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-100 group">
+                <div className="flex items-center gap-4">
+                  <div className={`w-3 h-3 rounded-full ${eventTypeConfig[event.type].color}`}></div>
                   <div>
-                    <h4 className="font-semibold text-gray-900">{hotel.name}</h4>
-                    <p className="text-sm text-gray-500">{hotel.location}</p>
+                    <h4 className="font-black text-gray-900 text-sm uppercase">{event.name}</h4>
+                    <p className="text-[10px] font-bold text-gray-400">{event.startDate} → {event.endDate}</p>
+                    <div className="flex gap-2 mt-1">
+                      <span className={`px-2 py-0.5 rounded text-[8px] font-black text-white ${eventTypeConfig[event.type].color} uppercase`}>
+                        {eventTypeConfig[event.type].label}
+                      </span>
+                      <span className="px-2 py-0.5 rounded text-[8px] font-black bg-white text-gray-700 uppercase border border-gray-200">
+                        ×{event.priceMultiplier} TARIF
+                      </span>
+                    </div>
                   </div>
                 </div>
-                <div className="text-right">
-                  <p className="text-2xl font-bold text-[#C6A87C]">{occupancyRate}%</p>
-                  <p className="text-xs text-gray-500">{hotelBookings}/{totalRooms} chambres</p>
+                <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <button onClick={() => handleEdit(event)} className="p-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors">
+                    <Edit size={14} />
+                  </button>
+                  <button onClick={() => handleDelete(event)} className="p-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors">
+                    <Trash2 size={14} />
+                  </button>
                 </div>
               </div>
-            );
-          })}
+            ))}
+          </div>
+        </div>
+
+        <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
+          <h3 className="text-xs font-black text-[#C6A87C] uppercase tracking-widest mb-6">Performance du Parc</h3>
+          <div className="space-y-4">
+            {hotels.map(h => {
+              const hBookings = bookings.filter(b => Number(b.hotelId) === h.id && (b.status === 'CONFIRMED' || b.status === 'COMPLETED')).length;
+              const tRooms = h.rooms?.length || 0;
+              const occRate = tRooms > 0 ? ((hBookings / tRooms) * 100).toFixed(0) : 0;
+
+              return (
+                <div key={h.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-100">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-white rounded-lg shadow-sm">
+                      <MapPin className="text-[#C6A87C]" size={18} />
+                    </div>
+                    <div>
+                      <h4 className="font-black text-gray-900 text-sm uppercase">{h.name}</h4>
+                      <p className="text-[10px] font-bold text-gray-400 uppercase">{h.location}</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-xl font-black text-[#6B5434]">{occRate}%</p>
+                    <p className="text-[10px] font-bold text-gray-400 uppercase">{hBookings}/{tRooms} CHAMBRES</p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
       </div>
 
-      {/* Seasonal Pricing Legend */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-        <h3 className="text-lg font-bold text-gray-800 mb-4">Légende & Saisons</h3>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {Object.entries(eventTypeConfig).map(([key, config]) => (
-            <div key={key} className="flex items-center gap-2">
-              <div className={`w-4 h-4 ${config.color} rounded`}></div>
-              <span className="text-sm text-gray-700">{config.label} (×{config.multiplier})</span>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Delete Confirmation Dialog */}
       <ConfirmDialog
         isOpen={showDeleteDialog}
         onClose={() => setShowDeleteDialog(false)}
         onConfirm={confirmDelete}
-        title="Supprimer l'évènement"
-        message={`Êtes-vous sûr de vouloir supprimer "${selectedEvent?.name}" ? Les tarifs reviendront à la normale pour cette période.`}
-        confirmText="Supprimer"
+        title="SUPPRESSION ÉVÈNEMENT"
+        message={`Confirmez-vous la suppression de "${selectedEvent?.name}" ? Les tarifs automatiques seront restaurés.`}
+        confirmText="SUPPRIMER"
         type="danger"
       />
 
-      {/* Form Dialog */}
       <FormDialog
         isOpen={showFormDialog}
         onClose={() => setShowFormDialog(false)}
-        title={selectedEvent ? 'Modifier l\'Évènement' : 'Nouvel Évènement'}
+        title={selectedEvent ? 'MODIFIER L\'ÉVÈNEMENT' : 'NOUVELLE PLANIFICATION'}
       >
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Nom de l'évènement *</label>
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="space-y-2">
+            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Intitulé de l'évènement</label>
             <input
               type="text"
               required
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#C6A87C] focus:border-transparent"
-              placeholder="Haute Saison Été"
+              className="w-full px-4 py-3 bg-gray-50 border-none rounded-xl font-bold focus:ring-2 focus:ring-[#C6A87C] outline-none"
+              placeholder="ex: Fête du Trône, Salon de l'Auto..."
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Date de Début *</label>
+          <div className="grid grid-cols-2 gap-6">
+            <div className="space-y-2">
+              <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Date Début</label>
               <input
                 type="date"
                 required
                 value={formData.startDate}
                 onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#C6A87C] focus:border-transparent"
+                className="w-full px-4 py-3 bg-gray-50 border-none rounded-xl font-bold focus:ring-2 focus:ring-[#C6A87C] outline-none"
               />
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Date de Fin *</label>
+            <div className="space-y-2">
+              <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Date Fin</label>
               <input
                 type="date"
                 required
                 value={formData.endDate}
                 onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#C6A87C] focus:border-transparent"
+                className="w-full px-4 py-3 bg-gray-50 border-none rounded-xl font-bold focus:ring-2 focus:ring-[#C6A87C] outline-none"
               />
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Type *</label>
+          <div className="grid grid-cols-2 gap-6">
+            <div className="space-y-2">
+              <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Type de Saisonalité</label>
               <select
                 value={formData.type}
                 onChange={(e) => setFormData({ ...formData, type: e.target.value as any })}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#C6A87C] focus:border-transparent"
+                className="w-full px-4 py-3 bg-gray-50 border-none rounded-xl font-bold focus:ring-2 focus:ring-[#C6A87C] outline-none"
               >
-                <option value="LOW_SEASON">Basse Saison</option>
-                <option value="HIGH_SEASON">Haute Saison</option>
-                <option value="PEAK">Pic</option>
-                <option value="EVENT">Évènement</option>
+                <option value="LOW_SEASON">BASSE SAISON</option>
+                <option value="HIGH_SEASON">HAUTE SAISON</option>
+                <option value="PEAK">PIC D'AFFLUENCE</option>
+                <option value="EVENT">ÉVÈNEMENT PONCTUEL</option>
               </select>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Multiplicateur Prix *</label>
+            <div className="space-y-2">
+              <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Multiplicateur (Coût)</label>
               <input
                 type="number"
                 required
@@ -418,43 +419,31 @@ export default function AdminCalendar() {
                 step="0.1"
                 value={formData.priceMultiplier}
                 onChange={(e) => setFormData({ ...formData, priceMultiplier: Number(e.target.value) })}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#C6A87C] focus:border-transparent"
+                className="w-full px-4 py-3 bg-gray-50 border-none rounded-xl font-bold focus:ring-2 focus:ring-[#C6A87C] outline-none"
               />
             </div>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
-            <textarea
-              value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#C6A87C] focus:border-transparent"
-              rows={3}
-              placeholder="Description de la période ou évènement..."
-            />
-          </div>
-
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex gap-3">
+          <div className="p-4 bg-blue-50 rounded-xl border border-blue-100 flex gap-4">
             <AlertCircle className="text-blue-600 flex-shrink-0" size={20} />
-            <div className="text-sm text-blue-800">
-              <p className="font-semibold">Impact des prix</p>
-              <p>Un multiplicateur de {formData.priceMultiplier}× signifie que les prix seront {formData.priceMultiplier > 1 ? 'augmentés' : 'réduits'} de {Math.abs((formData.priceMultiplier - 1) * 100).toFixed(0)}% durant cette période.</p>
-            </div>
+            <p className="text-[10px] font-bold text-blue-900 leading-relaxed">
+              IMPACT : Un multiplicateur de {formData.priceMultiplier}× appliquera une variation de {Math.abs((formData.priceMultiplier - 1) * 100).toFixed(0)}% sur les tarifs de base des établissements concernés.
+            </p>
           </div>
 
-          <div className="flex gap-3 justify-end pt-4 border-t">
+          <div className="flex gap-4 pt-4 border-t border-gray-100">
             <button
               type="button"
               onClick={() => setShowFormDialog(false)}
-              className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 font-medium transition-colors"
+              className="flex-1 px-6 py-3 border border-gray-200 rounded-xl text-xs font-black text-gray-400 uppercase tracking-widest hover:bg-gray-50 transition-colors"
             >
               Annuler
             </button>
             <button
               type="submit"
-              className="px-6 py-2 bg-[#C6A87C] hover:bg-[#B5966A] text-white rounded-lg font-medium transition-colors"
+              className="flex-1 px-6 py-3 bg-[#6B5434] hover:bg-[#5A462C] text-white rounded-xl font-black uppercase tracking-widest text-xs shadow-lg transition-all"
             >
-              {selectedEvent ? 'Mettre à jour' : 'Créer'}
+              {selectedEvent ? 'METTRE À JOUR' : 'CRÉER L\'ÉVÈNEMENT'}
             </button>
           </div>
         </form>

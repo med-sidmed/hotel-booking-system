@@ -1,9 +1,28 @@
-import { mockTransactions } from '../../data/mockData';
-import { Download, CreditCard, CheckCircle, XCircle, Clock } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { bookingService } from '../../api/booking.service';
+import type { Transaction } from '../../types';
+import { Download, CreditCard, CheckCircle, XCircle, Clock, Loader2 } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 export default function PaymentHistory() {
-  const userId = 101;
-  const userTransactions = mockTransactions.filter(t => t.userId === userId);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const fetchTransactions = async () => {
+    try {
+      const data = await bookingService.getTransactions();
+      setTransactions(data.filter(t => t.status !== 'FAILED')); // Optional: Hide failed ones or show them differently
+    } catch (err) {
+      console.error('Failed to fetch transactions:', err);
+      toast.error('Erreur lors du chargement de l\'historique');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchTransactions();
+  }, []);
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -32,56 +51,67 @@ export default function PaymentHistory() {
     }
   };
 
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20">
+        <Loader2 className="w-8 h-8 animate-spin text-[#6B5434] mb-4" />
+        <p className="text-gray-500 font-black uppercase tracking-widest text-[10px]">Chargement de vos factures...</p>
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-in fade-in duration-500">
       <div>
-        <h1 className="text-2xl font-bold text-gray-800">Historique des Paiements</h1>
-        <p className="text-gray-500 text-sm mt-1">Consultez vos transactions et factures</p>
+        <h1 className="text-2xl font-black text-gray-900 uppercase tracking-tighter">Historique de Paiement</h1>
+        <p className="text-gray-500 text-sm mt-1">Gérez vos transactions et téléchargez vos justificatifs fiscaux</p>
       </div>
 
-      <div className="grid grid-cols-1 gap-4">
-        {userTransactions.map((transaction) => (
-          <div key={transaction.id} className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow">
-            <div className="flex justify-between items-start">
-              <div className="flex items-start gap-4 flex-1">
-                <div className="p-3 bg-[#C6A87C]/10 rounded-lg">
-                  <CreditCard className="text-[#C6A87C]" size={24} />
+      <div className="grid grid-cols-1 gap-6">
+        {transactions.map((transaction) => (
+          <div key={transaction.id} className="bg-white rounded-2xl shadow-xl border border-gray-100 p-8 hover:shadow-2xl transition-all group border-l-4 border-l-[#C6A87C]">
+            <div className="flex justify-between items-center">
+              <div className="flex items-center gap-6 flex-1">
+                <div className="p-4 bg-gray-50 rounded-xl group-hover:bg-[#C6A87C]/10 transition-colors">
+                  <CreditCard className="text-[#C6A87C]" size={28} />
                 </div>
                 
                 <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-2">
-                    <h3 className="font-bold text-gray-800">Transaction {transaction.id}</h3>
+                  <div className="flex items-center gap-3 mb-2">
+                    <h3 className="font-black text-gray-900 uppercase tracking-widest text-xs">Réf. #{transaction.id}</h3>
                     {getStatusIcon(transaction.status)}
-                    <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
-                      transaction.status === 'COMPLETED' ? 'bg-green-100 text-green-700' :
-                      transaction.status === 'PENDING' ? 'bg-yellow-100 text-yellow-700' :
-                      'bg-red-100 text-red-700'
+                    <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-tighter ${
+                      transaction.status === 'COMPLETED' ? 'bg-green-50 text-green-700' :
+                      transaction.status === 'PENDING' ? 'bg-yellow-50 text-yellow-700' :
+                      'bg-red-50 text-red-700'
                     }`}>
                       {transaction.status}
                     </span>
                   </div>
                   
-                  <div className="space-y-1 text-sm">
-                    <p className="text-gray-600">
-                      <span className="font-medium">Réservation:</span> {transaction.bookingId}
-                    </p>
-                    <p className="text-gray-600">
-                      <span className="font-medium">Méthode:</span> {getMethodLabel(transaction.method)}
-                    </p>
-                    <p className="text-gray-600">
-                      <span className="font-medium">Type:</span> {transaction.type === 'DEPOSIT' ? 'Acompte (30%)' : 'Paiement Complet'}
-                    </p>
-                    <p className="text-gray-400 text-xs mt-2">{transaction.date}</p>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-[10px] font-bold uppercase tracking-widest text-gray-400">
+                    <div>
+                      <p className="mb-1 text-gray-300">Réservation</p>
+                      <p className="text-gray-600">REQ-{transaction.bookingId || transaction.booking}</p>
+                    </div>
+                    <div>
+                      <p className="mb-1 text-gray-300">Méthode</p>
+                      <p className="text-gray-600">{getMethodLabel(transaction.method)}</p>
+                    </div>
+                    <div>
+                      <p className="mb-1 text-gray-300">Date</p>
+                      <p className="text-gray-600">{transaction.date || String(transaction.created_at).split('T')[0]}</p>
+                    </div>
                   </div>
                 </div>
               </div>
 
               <div className="text-right">
-                <p className="text-2xl font-bold text-[#C6A87C]">{transaction.amount} {transaction.currency}</p>
-                {transaction.invoiceUrl && (
-                  <button className="mt-3 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-medium text-sm flex items-center gap-2 transition-colors">
-                    <Download size={16} />
-                    Facture
+                <p className="text-2xl font-black text-[#6B5434]">{Number(transaction.amount).toLocaleString()} <span className="text-xs">{transaction.currency}</span></p>
+                {(transaction.invoiceUrl || transaction.invoice_url) && (
+                  <button className="mt-4 px-5 py-2.5 bg-gray-900 text-white rounded-xl font-black uppercase tracking-widest text-[10px] flex items-center gap-2 hover:bg-black transition-all shadow-lg active:scale-95">
+                    <Download size={14} />
+                    Facture PDF
                   </button>
                 )}
               </div>
@@ -90,9 +120,11 @@ export default function PaymentHistory() {
         ))}
       </div>
 
-      {userTransactions.length === 0 && (
-        <div className="text-center py-12 bg-white rounded-xl border border-dashed border-gray-300">
-          <p className="text-gray-500">Aucune transaction trouvée.</p>
+      {transactions.length === 0 && (
+        <div className="text-center py-20 bg-gray-50 rounded-2xl border border-dashed border-gray-300">
+          <CreditCard className="mx-auto text-gray-300 mb-4" size={48} />
+          <p className="text-gray-500 font-black uppercase tracking-widest text-sm">Aucun historique</p>
+          <p className="text-gray-400 text-[10px] font-bold mt-2">Vous n'avez pas encore effectué de transactions sur notre plateforme.</p>
         </div>
       )}
     </div>
