@@ -1,0 +1,216 @@
+### Accounts & Authentication Endpoints
+
+@base_url = http://localhost:8000/api
+@email = test@example.com
+@password = password123
+
+# @name register
+POST {{base_url}}/auth/register/
+Content-Type: application/json
+
+{
+    "email": "{{email}}",
+    "name": "test user",
+    "password": "{{password}}",
+    "role": "user"
+}
+
+###
+
+# @name login
+POST {{base_url}}/auth/login/
+Content-Type: application/json
+
+{
+    "email": "{{email}}",
+    "password": "{{password}}"
+}
+
+###
+
+@access_token = {{login.response.body.token}}
+@refresh_token = none
+
+# @name get_me
+GET {{base_url}}/auth/me/
+Authorization: Bearer {{access_token}}
+
+###
+
+# @name update_profile
+PATCH {{base_url}}/auth/profile/
+Authorization: Bearer {{access_token}}
+Content-Type: application/json
+
+{
+    "phone": "987654321",
+    "address": "Nouakchott, Mauritania"
+}
+
+###
+
+# @name refresh_token_call
+POST {{base_url}}/auth/refresh/
+Content-Type: application/json
+
+{
+    "refresh": "{{refresh_token}}"
+}
+
+###
+
+### Communication Endpoints
+
+# @name list_notifications
+GET {{base_url}}/notifications/
+Authorization: Bearer {{access_token}}
+
+###
+
+# @name list_conversations
+GET {{base_url}}/conversations/
+Authorization: Bearer {{access_token}}
+
+###
+
+# @name create_conversation
+POST {{base_url}}/conversations/
+Authorization: Bearer {{access_token}}
+Content-Type: application/json
+
+{
+    "participants_ids": [],
+    "hotel_id": null
+}
+
+###
+
+# @name list_messages
+GET {{base_url}}/messages/
+Authorization: Bearer {{access_token}}
+
+###
+
+### Admin Endpoints (Requires Staff/Admin)
+
+# @name login_admin
+POST {{base_url}}/auth/login/
+Content-Type: application/json
+
+{
+    "email": "admin@luxotel.com",
+    "password": "adminpassword"
+}
+
+###
+
+@admin_token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzcxNzU5Njg3LCJpYXQiOjE3NzE3NTYwODcsImp0aSI6IjEwM2Y1NzJhZTlmNTRkN2ZhOTg5ZmI0ZTdkYjkyOWJlIiwidXNlcl9pZCI6ImMwNzQ5MTRhLTM2MzEtNDNhMS1iMDBlLTE5NGU4M2IzYmFmNCJ9.f5oPXC1A5xaRKNEocYLvcT1hmYB-iJzxQax7QsgZ6Uo
+
+# @name list_invitations
+GET {{base_url}}/invitations/
+Authorization: Bearer {{admin_token}}
+
+
+###
+
+# @name create_invitation
+POST {{base_url}}/invitations/
+Authorization: Bearer {{admin_token}}
+Content-Type: application/json
+
+{
+    "email": "new_owner@example.com",
+    "role": "owner",
+    "expires_at": "2026-12-31T23:59:59Z"
+}
+
+###
+
+# @name logout
+POST {{base_url}}/auth/logout/
+Authorization: Bearer {{access_token}}
+Content-Type: application/json
+
+{
+    "refresh": "{{refresh_token}}"
+}
+
+### Hotel App Endpoints
+
+# @name list_hotels
+GET {{base_url}}/hotels/
+
+###
+
+# @name create_hotel
+POST {{base_url}}/hotels/
+Authorization: Bearer {{admin_token}}
+Content-Type: application/json
+
+{
+    "name": "Luxotel Nouakchott",
+    "description": "The finest luxury hotel in the capital.",
+    "location": "Nouakchott",
+    "price_per_night": 5000,
+    "amenities": ["Spa", "Pool", "Gym"]
+}
+
+###
+
+@hotel_id = {{create_hotel.response.body.id}}
+
+# @name list_rooms
+GET {{base_url}}/rooms/?hotel_id={{hotel_id}}
+
+###
+
+# @name create_room
+POST {{base_url}}/rooms/
+Authorization: Bearer {{admin_token}}
+Content-Type: application/json
+
+{
+    "hotel": "{{hotel_id}}",
+    "type": "Deluxe Suite",
+    "price": 7500,
+    "capacity": 2,
+    "amenities": ["Sea View", "King Bed"]
+}
+
+###
+
+@room_id = {{create_room.response.body.id}}
+
+# @name create_booking
+POST {{base_url}}/bookings/
+Authorization: Bearer {{access_token}}
+Content-Type: application/json
+
+{
+    "room": "{{room_id}}",
+    "check_in": "2026-06-01",
+    "check_out": "2026-06-05",
+    "promo_code": "SAVE20"
+}
+
+###
+
+# @name list_reviews
+GET {{base_url}}/reviews/?hotel_id={{hotel_id}}
+
+###
+
+# @name create_promotion
+POST {{base_url}}/promotions/
+Authorization: Bearer {{admin_token}}
+Content-Type: application/json
+
+{
+    "code": "SUMMER2026",
+    "title": "Summer Vibes",
+    "discount_type": "PERCENTAGE",
+    "discount_value": 15,
+    "valid_from": "2026-06-01T00:00:00Z",
+    "valid_until": "2026-08-31T23:59:59Z",
+    "active": true
+}

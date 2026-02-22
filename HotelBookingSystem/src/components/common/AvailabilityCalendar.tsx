@@ -5,7 +5,7 @@ import { fr } from 'date-fns/locale';
 
 interface AvailabilityCalendarProps {
   roomId: string | number;
-  bookedDates?: Date[]; // Dates that are already booked
+  bookedDates?: Date[]; 
 }
 
 export function AvailabilityCalendar({ roomId, bookedDates = [] }: AvailabilityCalendarProps) {
