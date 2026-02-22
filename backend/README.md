@@ -137,6 +137,59 @@ L'API sera accessible sur `http://localhost:8000`.
 
 ---
 
+## 🔗 Intégration avec le Frontend (React + Axios)
+
+Pour consommer cette API depuis le frontend React, nous utilisons **Axios** avec une configuration centralisée.
+
+### 1. Configuration CORS (Backend)
+Le backend est déjà configuré dans `settings.py` avec `django-cors-headers`.
+- `INSTALLED_APPS`: contient `'corsheaders'`
+- `MIDDLEWARE`: contient `'corsheaders.middleware.CorsMiddleware'` (placé tout en haut)
+- `CORS_ALLOW_ALL_ORIGINS = True` (à restreindre en production)
+
+### 2. Exemple Complet Axios (Frontend)
+
+#### Configuration de l'instance (`src/api/axios.ts`)
+```typescript
+import axios from 'axios';
+
+const api = axios.create({
+  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8000/api/',
+  headers: { 'Content-Type': 'application/json' },
+});
+
+// Intercepteur pour ajouter le token JWT
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('access_token');
+  if (token) config.headers.Authorization = `Bearer ${token}`;
+  return config;
+});
+
+export default api;
+```
+
+#### Utilisation dans un composant (`ApiExample.tsx`)
+```tsx
+import { useEffect, useState } from 'react';
+import api from '../api/axios';
+
+export default function HotelList() {
+  const [hotels, setHotels] = useState([]);
+
+  useEffect(() => {
+    api.get('hotels/').then(res => setHotels(res.data));
+  }, []);
+
+  return (
+    <ul>
+      {hotels.map(h => <li key={h.id}>{h.name}</li>)}
+    </ul>
+  );
+}
+```
+
+---
+
 ## 📂 Structure des Données (Models)
 
 ### `User`
