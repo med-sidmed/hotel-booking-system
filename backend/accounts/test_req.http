@@ -4,16 +4,20 @@
 @email = test@example.com
 @password = password123
 
+# NOTE: Si {{...}} apparaît dans vos URLs, assurez-vous d'avoir exécuté 
+# la requête de création (ex: register ou create_hotel) AU PRÉALABLE.
+# Si le client REST ne remplace pas les variables, remplacez-les manuellement par des UUIDs.
+
 # @name register
 POST {{base_url}}/auth/register/
 Content-Type: application/json
 
-{
+{   
     "email": "{{email}}",
     "name": "test user",
     "password": "{{password}}",
     "role": "user"
-}
+}   
 
 ###
 
@@ -160,17 +164,16 @@ Content-Type: application/json
 @hotel_id = {{create_hotel.response.body.id}}
 
 # @name list_rooms
-GET {{base_url}}/rooms/?hotel_id={{hotel_id}}
+GET {{base_url}}/hotels/{{hotel_id}}/rooms/
 
 ###
 
 # @name create_room
-POST {{base_url}}/rooms/
+POST {{base_url}}/hotels/{{hotel_id}}/rooms/
 Authorization: Bearer {{admin_token}}
 Content-Type: application/json
 
 {
-    "hotel": "{{hotel_id}}",
     "type": "Deluxe Suite",
     "price": 7500,
     "capacity": 2,
@@ -181,6 +184,20 @@ Content-Type: application/json
 
 @room_id = {{create_room.response.body.id}}
 
+# @name validate_promo
+POST {{base_url}}/promotions/validate/
+Authorization: Bearer {{access_token}}
+Content-Type: application/json
+
+{
+    "code": "SUMMER2026",
+    "amount": 7500
+}
+
+###
+
+@promotion_id = {{validate_promo.response.body.promotion_id}}
+
 # @name create_booking
 POST {{base_url}}/bookings/
 Authorization: Bearer {{access_token}}
@@ -190,13 +207,27 @@ Content-Type: application/json
     "room": "{{room_id}}",
     "check_in": "2026-06-01",
     "check_out": "2026-06-05",
-    "promo_code": "SAVE20"
+    "promotion": "{{promotion_id}}"
 }
 
 ###
 
+@booking_id = {{create_booking.response.body.id}}
+
+# @name get_booking
+GET {{base_url}}/bookings/{{booking_id}}/
+Authorization: Bearer {{access_token}}
+
+###
+
+# @name cancel_booking
+PATCH {{base_url}}/bookings/{{booking_id}}/cancel/
+Authorization: Bearer {{access_token}}
+
+###
+
 # @name list_reviews
-GET {{base_url}}/reviews/?hotel_id={{hotel_id}}
+GET {{base_url}}/hotels/{{hotel_id}}/reviews/
 
 ###
 
@@ -206,11 +237,24 @@ Authorization: Bearer {{admin_token}}
 Content-Type: application/json
 
 {
-    "code": "SUMMER2026",
-    "title": "Summer Vibes",
+    "code": "SAVE20",
+    "title": "Save 20 on your first stay",
     "discount_type": "PERCENTAGE",
-    "discount_value": 15,
-    "valid_from": "2026-06-01T00:00:00Z",
-    "valid_until": "2026-08-31T23:59:59Z",
+    "discount_value": 20,
+    "valid_from": "2026-01-01T00:00:00Z",
+    "valid_until": "2026-12-31T23:59:59Z",
+    "min_purchase": 1000,
     "active": true
 }
+
+###
+
+# @name list_transactions
+GET {{base_url}}/transactions/
+Authorization: Bearer {{access_token}}
+
+###
+
+# @name list_pricing_rules
+GET {{base_url}}/pricing-rules/
+Authorization: Bearer {{admin_token}}

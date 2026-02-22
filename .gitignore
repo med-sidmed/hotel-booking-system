@@ -24,3 +24,25 @@ _.ntvs_
 _.njsproj
 _.sln
 \*.sw?
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Django
+*.sqlite3
+
+# Virtual environment
+venv/
+.env/
+
+# VS Code
+.vscode/
+
+# Mac
+.DS_Store
+
+# Logs
+*.log

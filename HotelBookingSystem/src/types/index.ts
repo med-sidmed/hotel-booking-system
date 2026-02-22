@@ -129,17 +129,7 @@ export interface Promotion {
   active: boolean;
 }
 
-export interface ActivityLog {
-  id: string;
-  userId: number | string;
-  userName: string;
-  action: 'CREATE' | 'UPDATE' | 'DELETE' | 'LOGIN' | 'LOGOUT';
-  entity: 'USER' | 'BOOKING' | 'HOTEL' | 'ROOM' | 'REVIEW';
-  entityId: string | number;
-  details: string;
-  timestamp: string;
-  ipAddress?: string;
-}
+ 
 
 export interface UserProfile extends UserLogin {
   phone?: string;

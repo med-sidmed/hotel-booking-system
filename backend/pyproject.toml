@@ -11,4 +11,5 @@ dependencies = [
     "django-cors-headers>=4.7.0",
     "django-filter>=25.2",
     "drf-spectacular>=0.29.0",
+ 
 ]

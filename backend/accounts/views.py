@@ -97,3 +97,5 @@ class InvitationViewSet(viewsets.ModelViewSet):
     queryset = Invitation.objects.all()
     serializer_class = InvitationSerializer
     permission_classes = [permissions.IsAdminUser]
+
+

@@ -56,6 +56,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'hotelbooking.middleware.JsonErrorMiddleware',
 ]
 
 ROOT_URLCONF = 'hotelbooking.urls'
@@ -130,7 +131,7 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# Authentication
+ # Authentication
 AUTH_USER_MODEL = 'accounts.User'
 
 REST_FRAMEWORK = {
@@ -140,6 +141,10 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': (
         'rest_framework.permissions.IsAuthenticated',
     ),
+    'DEFAULT_RENDERER_CLASSES': (
+        'rest_framework.renderers.JSONRenderer',
+    ),
+    'EXCEPTION_HANDLER': 'hotelbooking.exceptions.custom_exception_handler',
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
 }
 
@@ -167,3 +172,11 @@ SIMPLE_JWT = {
 # CORS Settings
 CORS_ALLOW_ALL_ORIGINS = True # Change to specific origins in production
 CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_METHODS = [
+    'GET',
+    'POST',
+    'PUT',
+    'PATCH',
+    'DELETE',
+    'OPTIONS'
+]

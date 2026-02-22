@@ -431,17 +431,7 @@ classDiagram
        +deactivate()
    }
 
-   class ActivityLog {
-       +UUID id
-       +UUID userId
-       +ActionType action
-       +EntityType entity
-       +UUID entityId
-       +String details
-       +String ipAddress
-       +DateTime createdAt
-       +log()
-   }
+  
 
    class PricingRule {
        +UUID id
@@ -562,7 +552,6 @@ classDiagram
    User "1" --> "0..*" Notification : receives
    User "1" --> "0..*" Message : sends
    User "0..*" --> "0..*" Conversation : participates
-   User "1" --> "0..*" ActivityLog : generates
 
    Hotel "1" --> "0..*" Room : contains
    Hotel "1" --> "0..*" Review : receives
@@ -586,7 +575,5 @@ classDiagram
    Notification --> NotificationType
    Promotion --> DiscountType
    PricingRule --> SeasonType
-   ActivityLog --> ActionType
-   ActivityLog --> EntityType
    Invitation --> UserRole
 ```

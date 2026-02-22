@@ -2,6 +2,7 @@ import uuid
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 
+
 class UserManager(BaseUserManager):
     def create_user(self, email, name, password=None, role='user', **extra_fields):
         if not email:
@@ -16,6 +17,7 @@ class UserManager(BaseUserManager):
         extra_fields.setdefault('is_staff', True)
         extra_fields.setdefault('is_superuser', True)
         return self.create_user(email, name, password, role='admin', **extra_fields)
+
 
 class User(AbstractBaseUser, PermissionsMixin):
     class UserRole(models.TextChoices):
@@ -52,6 +54,9 @@ class User(AbstractBaseUser, PermissionsMixin):
     def __str__(self):
         return self.email
 
+    
+
+
 class Notification(models.Model):
     class NotificationType(models.TextChoices):
         BOOKING_CONFIRMED = 'BOOKING_CONFIRMED'
@@ -76,6 +81,7 @@ class Notification(models.Model):
     def __str__(self):
         return self.title
 
+
 class Conversation(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     participants = models.ManyToManyField(User, related_name='conversations')
@@ -89,6 +95,7 @@ class Conversation(models.Model):
 
     def __str__(self):
         return f"Conversation {self.id}"
+
 
 class Message(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -105,6 +112,7 @@ class Message(models.Model):
     def __str__(self):
         return f"Message from {self.sender.email} at {self.created_at}"
 
+
 class Invitation(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     email = models.EmailField(unique=True)
@@ -119,6 +127,7 @@ class Invitation(models.Model):
         if self.expires_at < timezone.now() or self.used:
             return False
         return True
+
     def mark_as_used(self):
         self.used = True
         self.save()
